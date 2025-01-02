@@ -31,8 +31,18 @@ jobs:
         pip install pyinstaller requests
         
     - name: Build binary
+      env:
+        ARCHFLAGS: "${{ matrix.arch == 'arm64' && '-arch arm64' || '' }}"
       run: |
-        python build.py
+        if [ "${{ matrix.os }}" = "macos-latest" ] && [ "${{ matrix.arch }}" = "arm64" ]; then
+          # 特殊处理 macOS arm64 构建
+          python build.py
+          # 验证二进制文件
+          file dist/i18n-manager
+          otool -L dist/i18n-manager || true
+        else
+          python build.py
+        fi
         
     - name: Test binary
       run: |
