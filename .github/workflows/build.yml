@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'  # 当推送带v开头的tag时触发，如 v1.0.0
+  workflow_dispatch:  # 添加手动触发选项
 
 jobs:
   build:
@@ -17,10 +18,10 @@ jobs:
             arch: arm64  # 排除 Linux arm64 (需要特殊配置)
           
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
         
@@ -42,7 +43,7 @@ jobs:
         fi
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: binaries
         path: dist/i18n-manager-*
@@ -51,7 +52,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: binaries
         path: dist
