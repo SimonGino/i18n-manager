@@ -9,6 +9,20 @@ NC='\033[0m'
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
 
+# 转换架构名称
+case "$ARCH" in
+    x86_64)
+        ARCH="amd64"
+        ;;
+    arm64|aarch64)
+        ARCH="arm64"
+        ;;
+    *)
+        echo -e "${RED}Unsupported architecture: $ARCH${NC}"
+        exit 1
+        ;;
+esac
+
 # 确定下载URL
 GITHUB_REPO="SimonGino/i18n-manager"
 VERSION=$(curl -s https://api.github.com/repos/${GITHUB_REPO}/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
@@ -19,63 +33,52 @@ if [ -z "$VERSION" ]; then
 fi
 
 # 构建下载URL
-case "$OS" in
-    linux)
-        case "$ARCH" in
-            x86_64)
-                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-manager-linux-amd64"
-                ;;
-            aarch64)
-                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-manager-linux-arm64"
-                ;;
-            *)
-                echo -e "${RED}Unsupported architecture: $ARCH${NC}"
-                exit 1
-                ;;
-        esac
-        ;;
-    darwin)
-        case "$ARCH" in
-            x86_64)
-                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-manager-darwin-amd64"
-                ;;
-            arm64)
-                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-manager-darwin-arm64"
-                ;;
-            *)
-                echo -e "${RED}Unsupported architecture: $ARCH${NC}"
-                exit 1
-                ;;
-        esac
-        ;;
-    *)
-        echo -e "${RED}Unsupported operating system: $OS${NC}"
-        exit 1
-        ;;
-esac
+BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-manager-${OS}-${ARCH}"
+
+# 创建临时目录
+TMP_DIR=$(mktemp -d)
+TMP_FILE="$TMP_DIR/i18n-manager"
 
 # 创建安装目录
 INSTALL_DIR="$HOME/.local/bin"
 mkdir -p "$INSTALL_DIR"
 
 # 下载二进制文件
-echo "Downloading i18n-manager from: $BINARY_URL"
-if ! curl -L -o "$INSTALL_DIR/i18n-manager" "$BINARY_URL"; then
+echo -e "Downloading i18n-manager ${VERSION} for ${OS}-${ARCH}..."
+echo -e "From: ${BINARY_URL}"
+
+if ! curl -L -o "$TMP_FILE" "$BINARY_URL"; then
     echo -e "${RED}Download failed${NC}"
+    rm -rf "$TMP_DIR"
+    exit 1
+fi
+
+# 检查文件大小
+FILE_SIZE=$(stat -f%z "$TMP_FILE" 2>/dev/null || stat -c%s "$TMP_FILE" 2>/dev/null)
+if [ "$FILE_SIZE" -lt 1000000 ]; then  # 小于 1MB
+    echo -e "${RED}Error: Downloaded file is too small (possibly corrupted)${NC}"
+    echo -e "${RED}File size: ${FILE_SIZE} bytes${NC}"
+    rm -rf "$TMP_DIR"
     exit 1
 fi
 
 # 设置执行权限
-chmod +x "$INSTALL_DIR/i18n-manager"
+chmod +x "$TMP_FILE"
 
-# 验证安装
-if ! "$INSTALL_DIR/i18n-manager" --version &> /dev/null; then
-    echo -e "${RED}Installation verification failed${NC}"
-    echo -e "${RED}Downloaded file content:${NC}"
-    head -n 1 "$INSTALL_DIR/i18n-manager"
-    rm -f "$INSTALL_DIR/i18n-manager"
+# 测试二进制文件
+echo -e "Verifying binary..."
+if ! "$TMP_FILE" --version > /dev/null 2>&1; then
+    echo -e "${RED}Binary verification failed${NC}"
+    echo -e "${RED}File type: $(file "$TMP_FILE")${NC}"
+    rm -rf "$TMP_DIR"
     exit 1
 fi
+
+# 移动到安装目录
+mv "$TMP_FILE" "$INSTALL_DIR/i18n-manager"
+
+# 清理临时目录
+rm -rf "$TMP_DIR"
 
 # 检查 PATH
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
@@ -84,5 +87,7 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
 fi
 
 echo -e "${GREEN}Installation completed!${NC}"
-echo -e "Please restart your terminal or run: source ~/.bashrc"
+echo -e "Version: $($INSTALL_DIR/i18n-manager --version)"
+echo -e "Location: $INSTALL_DIR/i18n-manager"
+echo -e "\nPlease restart your terminal or run: source ~/.bashrc"
 echo -e "Then you can use 'i18n-manager' command anywhere." 
