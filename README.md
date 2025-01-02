@@ -124,3 +124,5 @@ message-application_zh_TW.properties  # 繁体中文
 ## 贡献
 
 欢迎提交 Issue 和 Pull Request！
+
+![Build Status](https://github.com/SimonGino/i18n-manager/workflows/Build%20and%20Release/badge.svg)
