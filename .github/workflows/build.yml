@@ -3,8 +3,8 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'  # 当推送带v开头的tag时触发，如 v1.0.0
-  workflow_dispatch:  # 添加手动触发选项
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
         arch: [amd64, arm64]
         exclude:
           - os: ubuntu-latest
-            arch: arm64  # 排除 Linux arm64 (需要特殊配置)
+            arch: arm64
           
     steps:
     - uses: actions/checkout@v4
@@ -33,6 +33,12 @@ jobs:
     - name: Build binary
       run: |
         python build.py
+        
+    - name: Test binary
+      run: |
+        chmod +x dist/i18n-manager
+        ./dist/i18n-manager --version || true
+        file dist/i18n-manager
         
     - name: Rename binary for distribution
       run: |
@@ -56,6 +62,11 @@ jobs:
       with:
         name: binaries
         path: dist
+
+    - name: List files
+      run: |
+        ls -la dist/
+        file dist/*
 
     - name: Create Release
       id: create_release
