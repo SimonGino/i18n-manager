@@ -103,7 +103,7 @@ message-application_zh_TW.properties  # 繁体中文
 
 如果需要卸载工具：
 ```bash
-rm -f ~/.local/bin/i18n-manager
+curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/uninstall.sh | bash
 ```
 
 ## 贡献
