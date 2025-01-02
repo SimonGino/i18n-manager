@@ -43,6 +43,8 @@ class TranslationService:
                 json=payload
             )
 
+            print(response.json())
+
             if response.status_code == 200:
                 data = response.json()
                 # 解析输出中的JSON字符串
@@ -229,7 +231,7 @@ class I18nManager:
 def main():
     parser = argparse.ArgumentParser(description='I18n Manager Tool')
     parser.add_argument('--version', action='version', version='i18n-manager v0.1.9')
-    parser.add_argument('--path', default='./lang', help='properties文件所在目录路径')
+    parser.add_argument('--path', default='.', help='properties文件所在目录路径')
     parser.add_argument('--api-key', default='app-Z96qaTga6LC06l55JsSynCWO', help='翻译API的密钥')
 
     subparsers = parser.add_subparsers(dest='command', help='可用命令')

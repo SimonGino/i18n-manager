@@ -39,7 +39,7 @@ curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/install
 
 工具支持以下全局参数：
 
-- `--path`：properties 文件所在目录路径（默认为 ./lang）
+- `--path`：properties 文件所在目录路径（默认为 ., 当前目录）
 - `--api-key`：翻译 API 的密钥（默认为 'app-xxxxxxx'）
 
 ### 可用命令
