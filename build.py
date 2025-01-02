@@ -13,5 +13,6 @@ PyInstaller.__main__.run([
     '--onefile',
     '--name=i18n-manager',
     f'--add-data=src/i18_manager/lang{separator}lang',
-    '--clean'
+    '--clean',
+    '--noupx',  # 避免使用 UPX 压缩
 ]) 

@@ -11,16 +11,22 @@ ARCH=$(uname -m)
 
 # 确定下载URL
 GITHUB_REPO="SimonGino/i18n-manager"
-VERSION="latest"
+VERSION=$(curl -s https://api.github.com/repos/${GITHUB_REPO}/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
+if [ -z "$VERSION" ]; then
+    echo -e "${RED}Error: Could not determine latest version${NC}"
+    exit 1
+fi
+
+# 构建下载URL
 case "$OS" in
     linux)
         case "$ARCH" in
             x86_64)
-                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/$VERSION/i18n-manager-linux-amd64"
+                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-manager-linux-amd64"
                 ;;
             aarch64)
-                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/$VERSION/i18n-manager-linux-arm64"
+                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-manager-linux-arm64"
                 ;;
             *)
                 echo -e "${RED}Unsupported architecture: $ARCH${NC}"
@@ -31,10 +37,10 @@ case "$OS" in
     darwin)
         case "$ARCH" in
             x86_64)
-                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/$VERSION/i18n-manager-darwin-amd64"
+                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-manager-darwin-amd64"
                 ;;
             arm64)
-                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/$VERSION/i18n-manager-darwin-arm64"
+                BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-manager-darwin-arm64"
                 ;;
             *)
                 echo -e "${RED}Unsupported architecture: $ARCH${NC}"
@@ -53,9 +59,23 @@ INSTALL_DIR="$HOME/.local/bin"
 mkdir -p "$INSTALL_DIR"
 
 # 下载二进制文件
-echo "Downloading i18n-manager..."
-curl -L "$BINARY_URL" -o "$INSTALL_DIR/i18n-manager"
+echo "Downloading i18n-manager from: $BINARY_URL"
+if ! curl -L -o "$INSTALL_DIR/i18n-manager" "$BINARY_URL"; then
+    echo -e "${RED}Download failed${NC}"
+    exit 1
+fi
+
+# 设置执行权限
 chmod +x "$INSTALL_DIR/i18n-manager"
+
+# 验证安装
+if ! "$INSTALL_DIR/i18n-manager" --version &> /dev/null; then
+    echo -e "${RED}Installation verification failed${NC}"
+    echo -e "${RED}Downloaded file content:${NC}"
+    head -n 1 "$INSTALL_DIR/i18n-manager"
+    rm -f "$INSTALL_DIR/i18n-manager"
+    exit 1
+fi
 
 # 检查 PATH
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
