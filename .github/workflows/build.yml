@@ -11,11 +11,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        arch: [amd64, arm64]
-        exclude:
+        include:
           - os: ubuntu-latest
+            arch: amd64
+            platform: linux
+          - os: macos-latest
+            arch: amd64
+            platform: darwin
+          - os: macos-latest
             arch: arm64
+            platform: darwin
           
     steps:
     - uses: actions/checkout@v4
@@ -29,17 +34,24 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller requests
-        
+
+    - name: Set up QEMU
+      if: matrix.arch == 'arm64'
+      uses: docker/setup-qemu-action@v3
+      
     - name: Build binary
-      env:
-        ARCHFLAGS: "${{ matrix.arch == 'arm64' && '-arch arm64' || '' }}"
       run: |
-        if [ "${{ matrix.os }}" = "macos-latest" ] && [ "${{ matrix.arch }}" = "arm64" ]; then
-          # 特殊处理 macOS arm64 构建
-          python build.py
-          # 验证二进制文件
-          file dist/i18n-manager
-          otool -L dist/i18n-manager || true
+        if [ "${{ matrix.platform }}" = "darwin" ] && [ "${{ matrix.arch }}" = "arm64" ]; then
+          # 使用特殊的构建命令
+          python -m PyInstaller --target-arch=arm64 \
+            --clean --onefile \
+            --name=i18n-manager \
+            --add-data="src/i18_manager/lang:lang" \
+            --hidden-import=requests \
+            --hidden-import=json \
+            --hidden-import=codecs \
+            --hidden-import=argparse \
+            src/i18_manager/i18n_manager.py
         else
           python build.py
         fi
@@ -47,16 +59,17 @@ jobs:
     - name: Test binary
       run: |
         chmod +x dist/i18n-manager
-        ./dist/i18n-manager --version || true
-        file dist/i18n-manager
+        if [ "${{ matrix.platform }}" = "darwin" ] && [ "${{ matrix.arch }}" = "arm64" ]; then
+          # 对于 macOS arm64，只检查文件类型
+          file dist/i18n-manager
+        else
+          ./dist/i18n-manager --version || true
+          file dist/i18n-manager
+        fi
         
     - name: Rename binary for distribution
       run: |
-        if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-          mv dist/i18n-manager "dist/i18n-manager-linux-${{ matrix.arch }}"
-        elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-          mv dist/i18n-manager "dist/i18n-manager-darwin-${{ matrix.arch }}"
-        fi
+        mv dist/i18n-manager "dist/i18n-manager-${{ matrix.platform }}-${{ matrix.arch }}"
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
