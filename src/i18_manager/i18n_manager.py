@@ -161,11 +161,19 @@ class I18nManager:
                         else:
                             lines.append(line)
                 
+                # 确保最后一行有换行符
+                if lines and not lines[-1].endswith('\n'):
+                    lines[-1] += '\n'
+                
                 with codecs.open(full_path, 'w', 'utf-8') as f:
                     f.writelines(lines)
             else:
-                # 追加新值
-                with codecs.open(full_path, 'a', 'utf-8') as f:
+                # 追加新值前确保文件以换行符结束
+                with codecs.open(full_path, 'r+', 'utf-8') as f:
+                    content = f.read()
+                    f.seek(0, 2)  # 移动到文件末尾
+                    if content and not content.endswith('\n'):
+                        f.write('\n')  # 如果最后一行没有换行符，添加一个
                     f.write(f"{key}={text}\n")
 
             print(f"已更新 {filename}")
@@ -187,11 +195,19 @@ class I18nManager:
                             else:
                                 lines.append(line)
                     
+                    # 确保最后一行有换行符
+                    if lines and not lines[-1].endswith('\n'):
+                        lines[-1] += '\n'
+                    
                     with codecs.open(zh_cn_full_path, 'w', 'utf-8') as f:
                         f.writelines(lines)
                 else:
-                    # 追加新值
-                    with codecs.open(zh_cn_full_path, 'a', 'utf-8') as f:
+                    # 追加新值前确保文件以换行符结束
+                    with codecs.open(zh_cn_full_path, 'r+', 'utf-8') as f:
+                        content = f.read()
+                        f.seek(0, 2)  # 移动到文件末尾
+                        if content and not content.endswith('\n'):
+                            f.write('\n')  # 如果最后一行没有换行符，添加一个
                         f.write(f"{key}={text}\n")
                 
                 print(f"已自动同步到 {zh_cn_filename}")
