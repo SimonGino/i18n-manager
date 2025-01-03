@@ -261,25 +261,10 @@ def main():
 
     args = parser.parse_args()
 
-    # 如果没有提供命令，显示帮助信息并退出
-    if not args.command:
-        parser.print_help()
-        sys.exit(1)
-
     # 加载配置
     config = Config()
     
-    # 优先使用命令行参数的 API key，如果没有则使用配置文件中的
-    api_key = args.api_key or config.get_api_key()
-    
-    if not api_key:
-        print("错误：未设置API密钥。请使用 --api-key 参数或设置配置文件")
-        sys.exit(1)
-
-    translation_service = TranslationService(api_key)
-    manager = I18nManager(args.path, translation_service)
-
-    # 处理配置命令
+    # 如果是配置命令，直接处理
     if args.command == 'config':
         if args.set_api_key:
             config.set_api_key(args.set_api_key)
@@ -290,6 +275,26 @@ def main():
             print(f"默认路径: {config.config.get('default_path', '.')}")
         return
 
+    # 如果没有提供命令，显示帮助信息并退出
+    if not args.command:
+        parser.print_help()
+        print("\n提示：首次使用请先设置 API 密钥：")
+        print("i18n-manager config --set-api-key YOUR_API_KEY")
+        sys.exit(1)
+
+    # 检查 API key
+    api_key = args.api_key or config.get_api_key()
+    if not api_key:
+        print("错误：未设置API密钥。请使用以下命令设置：")
+        print("i18n-manager config --set-api-key YOUR_API_KEY")
+        print("\n或者使用 --api-key 参数临时指定：")
+        print("i18n-manager --api-key YOUR_API_KEY <command>")
+        sys.exit(1)
+
+    translation_service = TranslationService(api_key)
+    manager = I18nManager(args.path, translation_service)
+
+    # 处理其他命令
     if args.command == 'translate':
         manager.smart_translate(args.text)
     elif args.command == 'list':
@@ -310,7 +315,6 @@ def main():
             sys.exit(1)
 
         manager.add_translation(args.key, translations)
-    # 移除这里的 else 分支，因为我们已经在前面处理了没有命令的情况
 
 
 if __name__ == '__main__':
