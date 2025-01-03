@@ -6,7 +6,7 @@ import sys
 from typing import Dict, Optional
 from dataclasses import dataclass
 import requests
-from .config import Config
+from i18_manager.config import Config
 
 
 @dataclass

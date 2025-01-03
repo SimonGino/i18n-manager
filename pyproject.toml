@@ -14,6 +14,8 @@ license = {text = "MIT"}
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
-
 [tool.pdm]
 distribution = true
+
+[project.scripts]
+i18n-manager = "i18_manager.i18n_manager:main"

@@ -10,10 +10,10 @@ else:
 
 # 运行构建
 PyInstaller.__main__.run([
-    'src/i18_manager/i18n_manager.py',
+    'src/i18_manager/__main__.py',
     '--onefile',
     '--name=i18n-manager',
-    f'--add-data=src/i18_manager/lang{separator}lang',
+    f'--add-data=src/i18_manager{separator}i18_manager',
     '--clean',
     '--hidden-import=requests',
     '--hidden-import=json',
