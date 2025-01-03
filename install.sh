@@ -39,9 +39,11 @@ BINARY_URL="https://github.com/$GITHUB_REPO/releases/download/${VERSION}/i18n-ma
 TMP_DIR=$(mktemp -d)
 TMP_FILE="$TMP_DIR/i18n-manager"
 
-# 创建安装目录
+# 创建安装目录和配置目录
 INSTALL_DIR="$HOME/.local/bin"
+CONFIG_DIR="$HOME/.config/i18n-manager"
 mkdir -p "$INSTALL_DIR"
+mkdir -p "$CONFIG_DIR"
 
 # 下载二进制文件
 echo -e "Downloading i18n-manager ${VERSION} for ${OS}-${ARCH}..."
@@ -71,7 +73,6 @@ echo -e "Verifying binary..."
 if ! "$TMP_FILE" 2>&1 | grep -q "usage\|help\|i18n-manager"; then
     echo -e "${RED}Warning: Binary might not be working correctly${NC}"
     echo -e "${RED}File type: $(file "$TMP_FILE")${NC}"
-    # 继续安装，但显示警告
     echo -e "${RED}Continuing installation despite verification warning...${NC}"
 fi
 
@@ -89,8 +90,9 @@ fi
 
 echo -e "${GREEN}Installation completed!${NC}"
 echo -e "Location: $INSTALL_DIR/i18n-manager"
+echo -e "Config directory: $CONFIG_DIR"
 echo -e "\nPlease restart your terminal or run: source ~/.bashrc"
-echo -e "Then you can use 'i18n-manager' command anywhere."
+echo -e "Then set up your API key with: i18n-manager config --set-api-key YOUR_API_KEY"
 
 # 尝试运行帮助命令
 echo -e "\nTrying to run help command..."

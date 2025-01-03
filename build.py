@@ -19,6 +19,7 @@ PyInstaller.__main__.run([
     '--hidden-import=json',
     '--hidden-import=codecs',
     '--hidden-import=argparse',
+    '--hidden-import=pathlib',
 ])
 
 # 构建完成后设置权限

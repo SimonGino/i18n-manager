@@ -5,7 +5,7 @@ description = "一个强大的多语言属性文件管理工具，专为 Java �
 authors = [
     {name = "SimonGino", email = "rwjeek@gmail.com"},
 ]
-dependencies = ["requests>=2.32.3","urllib3<2.0.0"]
+dependencies = ["requests>=2.32.3","urllib3<2.0.0", "PyInstaller>=4.5.1"]
 requires-python = ">=3.9"
 readme = "README.md"
 license = {text = "MIT"}

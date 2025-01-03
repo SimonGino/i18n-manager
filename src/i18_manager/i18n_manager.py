@@ -6,6 +6,7 @@ import sys
 from typing import Dict, Optional
 from dataclasses import dataclass
 import requests
+from .config import Config
 
 
 @dataclass
@@ -232,7 +233,7 @@ def main():
     parser = argparse.ArgumentParser(description='I18n Manager Tool')
     parser.add_argument('--version', action='version', version='i18n-manager v0.1.9')
     parser.add_argument('--path', default='.', help='properties文件所在目录路径')
-    parser.add_argument('--api-key', default='app-Z96qaTga6LC06l55JsSynCWO', help='翻译API的密钥')
+    parser.add_argument('--api-key', help='翻译API的密钥（可选，优先级高于配置文件）')
 
     subparsers = parser.add_subparsers(dest='command', help='可用命令')
 
@@ -253,6 +254,11 @@ def main():
     # check命令
     subparsers.add_parser('check', help='检查缺失的翻译')
 
+    # 添加配置管理命令
+    config_parser = subparsers.add_parser('config', help='管理配置')
+    config_parser.add_argument('--set-api-key', help='设置API密钥')
+    config_parser.add_argument('--show', action='store_true', help='显示当前配置')
+
     args = parser.parse_args()
 
     # 如果没有提供命令，显示帮助信息并退出
@@ -260,8 +266,29 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    translation_service = TranslationService(args.api_key)
+    # 加载配置
+    config = Config()
+    
+    # 优先使用命令行参数的 API key，如果没有则使用配置文件中的
+    api_key = args.api_key or config.get_api_key()
+    
+    if not api_key:
+        print("错误：未设置API密钥。请使用 --api-key 参数或设置配置文件")
+        sys.exit(1)
+
+    translation_service = TranslationService(api_key)
     manager = I18nManager(args.path, translation_service)
+
+    # 处理配置命令
+    if args.command == 'config':
+        if args.set_api_key:
+            config.set_api_key(args.set_api_key)
+            print("API密钥已更新")
+        if args.show:
+            print("\n当前配置:")
+            print(f"API密钥: {'*' * 8 + config.get_api_key()[-4:] if config.get_api_key() else '未设置'}")
+            print(f"默认路径: {config.config.get('default_path', '.')}")
+        return
 
     if args.command == 'translate':
         manager.smart_translate(args.text)
