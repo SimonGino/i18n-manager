@@ -11,12 +11,11 @@ rm -f "$HOME/.local/bin/i18n-manager"
 # 询问是否删除配置文件
 read -p "Do you want to remove configuration files as well? (y/N) " -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if [[ $REPLY =~ ^[Yy]$ ]]; then
     rm -rf "$HOME/.config/i18n-manager"
     echo -e "${GREEN}Configuration files removed.${NC}"
 else
     echo -e "${YELLOW}Configuration files kept at $HOME/.config/i18n-manager${NC}"
 fi
 
-echo -e "${GREEN}i18n-manager has been uninstalled.${NC}" 
+echo -e "${GREEN}i18n-manager has been uninstalled.${NC}"

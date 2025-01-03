@@ -109,50 +109,91 @@ class I18nManager:
 
     def add_translation(self, key: str, translations: Dict[str, str]) -> None:
         """添加新的翻译"""
-        for lang, text in translations.items():
+        # 首先检查所有语言文件中是否存在该key
+        key_exists = False
+        existing_translations = {}
+        
+        for lang in translations.keys():
             if lang not in self.files:
                 print(f"警告: 不支持的语言 {lang}")
                 continue
-
+            
             filename = self.files[lang]
             self._ensure_file_exists(filename)
-
-            # 加载现有翻译
             existing = self._load_existing_translations(filename)
+            
+            if key in existing:
+                key_exists = True
+                existing_translations[lang] = existing[key]
 
-            # 如果key已存在，询问是否覆盖（除非是zh_CN文件）
-            if key in existing and lang != 'zh_CN':
-                response = input(f"键 '{key}' 在 {filename} 中已存在。是否覆盖? (y/N): ")
-                if response.lower() != 'y':
-                    print(f"跳过 {filename}")
-                    continue
+        # 如果key存在，显示当前值并询问是否更新
+        if key_exists:
+            print(f"\n键 '{key}' 已存在于以下语言文件中：")
+            for lang, value in existing_translations.items():
+                print(f"{lang}: {value}")
+                print(f"新值: {translations[lang]}")
+            
+            response = input("\n是否要更新这些翻译? (y/N): ")
+            if response.lower() != 'y':
+                print("已取消更新")
+                return
+
+        # 继续处理每个语言的翻译
+        for lang, text in translations.items():
+            if lang not in self.files:
+                continue
+
+            filename = self.files[lang]
+            full_path = os.path.join(self.base_path, filename)
 
             # 如果是中文，转换为Unicode
             if lang.startswith("zh"):
                 text = text.encode('unicode_escape').decode()
 
-            # 更新翻译
-            existing[key] = text
-
-            # 写入文件
-            full_path = os.path.join(self.base_path, filename)
-            with codecs.open(full_path, 'w', 'utf-8') as f:
-                for k, v in sorted(existing.items()):
-                    f.write(f'{k}={v}\n')
+            # 更新或添加翻译
+            if key in existing_translations:
+                # 更新现有值
+                lines = []
+                with codecs.open(full_path, 'r', 'utf-8') as f:
+                    for line in f:
+                        if line.startswith(f"{key}="):
+                            lines.append(f"{key}={text}\n")
+                        else:
+                            lines.append(line)
+                
+                with codecs.open(full_path, 'w', 'utf-8') as f:
+                    f.writelines(lines)
+            else:
+                # 追加新值
+                with codecs.open(full_path, 'a', 'utf-8') as f:
+                    f.write(f"{key}={text}\n")
 
             print(f"已更新 {filename}")
 
-            # 如果更新的是zh文件，自动同步到zh_CN文件，无需询问
+            # 如果更新的是zh文件，自动同步到zh_CN文件
             if lang == 'zh':
                 zh_cn_filename = self.files['zh_CN']
                 self._ensure_file_exists(zh_cn_filename)
-                zh_cn_existing = self._load_existing_translations(zh_cn_filename)
-                zh_cn_existing[key] = text
-
-                full_path = os.path.join(self.base_path, zh_cn_filename)
-                with codecs.open(full_path, 'w', 'utf-8') as f:
-                    for k, v in sorted(zh_cn_existing.items()):
-                        f.write(f'{k}={v}\n')
+                zh_cn_full_path = os.path.join(self.base_path, zh_cn_filename)
+                
+                # 直接同步到zh_CN，无需询问
+                if key in existing_translations:
+                    # 更新现有值
+                    lines = []
+                    with codecs.open(zh_cn_full_path, 'r', 'utf-8') as f:
+                        for line in f:
+                            if line.startswith(f"{key}="):
+                                lines.append(f"{key}={text}\n")
+                            else:
+                                lines.append(line)
+                    
+                    with codecs.open(zh_cn_full_path, 'w', 'utf-8') as f:
+                        f.writelines(lines)
+                else:
+                    # 追加新值
+                    with codecs.open(zh_cn_full_path, 'a', 'utf-8') as f:
+                        f.write(f"{key}={text}\n")
+                
                 print(f"已自动同步到 {zh_cn_filename}")
 
     def _sync_translation(self, key: str, text: str, target_lang: str) -> None:
