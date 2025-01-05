@@ -30,7 +30,7 @@ curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/install
 
 首次使用前，需要配置 DeepSeek API key：
 
-1. 访问 [DeepSeek](https://deepseek.com) 获取 API key
+1. 前往 [DeepSeek Dashboard](https://platform.deepseek.com/api_keys) 获取您的 API 密钥。
 2. 配置 API key：
 ```bash
 i18n-manager config --set-api-key YOUR_API_KEY

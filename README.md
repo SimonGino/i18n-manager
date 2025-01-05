@@ -33,7 +33,7 @@ Download the binary for your platform from the [Releases](https://github.com/Sim
 
 Before first use, configure your DeepSeek API key:
 
-1. Visit [DeepSeek](https://deepseek.com) to obtain your API key
+1. Visit [DeepSeek Dashboard](https://platform.deepseek.com/api_keys) to get your API key.
 2. Configure the API key:
 
 ```bash
