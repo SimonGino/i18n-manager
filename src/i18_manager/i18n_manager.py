@@ -44,8 +44,6 @@ class TranslationService:
                 json=payload
             )
 
-            print(response.json())
-
             if response.status_code == 200:
                 data = response.json()
                 # 解析输出中的JSON字符串
@@ -297,6 +295,8 @@ def main():
     # 智能翻译命令
     translate_parser = subparsers.add_parser('translate', help='智能翻译并添加')
     translate_parser.add_argument('text', help='要翻译的文本')
+    translate_parser.add_argument('--key', help='指定翻译的key')
+
 
     # 添加新翻译命令
     add_parser = subparsers.add_parser('add', help='添加新的翻译')
@@ -353,7 +353,31 @@ def main():
 
     # 处理其他命令
     if args.command == 'translate':
-        manager.smart_translate(args.text)
+        print(f"正在翻译: {args.text}")
+        result = translation_service.translate(args.text)
+        if result.status:
+            # 显示生成的键和翻译结果
+            original_key = result.key
+            if args.key:  # 如果指定了key，使用指定的key
+                print(f"使用指定的键: {args.key} (原生成键: {original_key})")
+                result.key = args.key
+            else:
+                print(f"生成的键: {result.key}")
+            
+            print("\n翻译结果:")
+            for lang, trans in result.translations.items():
+                print(f"{lang}: {trans}")
+            
+            # 确认是否添加
+            response = input("\n是否添加这些翻译? (y/N): ")
+            if response.lower() == 'y':
+                manager.add_translation(result.key, result.translations)
+                print("翻译已添加")
+            else:
+                print("已取消添加翻译")
+        else:
+            print(f"翻译失败: {result.message}")
+
     elif args.command == 'list':
         manager.list_keys()
     elif args.command == 'check':

@@ -1,143 +1,210 @@
-# I18n Manager Tool
+# i18n-manager
+[简体中文](README_CN.md)  ![Build Status](https://github.com/SimonGino/i18n-manager/actions/workflows/build.yml/badge.svg)  
 
-![Build Status](https://github.com/SimonGino/i18n-manager/actions/workflows/build.yml/badge.svg)
+A powerful multilingual properties file management tool designed for Java project internationalization (i18n). This tool helps you easily manage and synchronize translations in `message-application.properties` files.
 
-一个强大的多语言属性文件管理工具，专为 Java 项目的国际化(i18n)设计。该工具可以帮助您轻松管理和同步 `message-application.properties` 文件中的多语言翻译。
+## Features
 
-## 快速安装
+- 🤖 Smart Translation: Automated text translation using DeepSeek AI
+- 🔑 Smart Key Generation: Automatically generates keys compliant with Java properties standards
+- 🔄 Auto Sync: Automatic synchronization from Simplified Chinese (zh) to Traditional Chinese (zh_TW)
+- 📝 Manual Management: Support for manual addition and update of translations
+- 🔍 Check Tool: Verification of missing translation entries
 
-### 自动安装（推荐）
+## Quick Installation
+
+### Automatic Installation (Recommended)
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/install.sh | bash
 ```
 
-### 手动安装
-从 [Releases](https://github.com/SimonGino/i18n-manager/releases/latest) 页面下载对应平台的二进制文件。
+### Manual Installation
 
-支持的平台：
+Download the binary for your platform from the [Releases](https://github.com/SimonGino/i18n-manager/releases/latest) page.
+
+### Supported Platforms
+
 - Linux (amd64)
 - macOS (amd64, arm64)
+- Windows (amd64) - Coming soon
 
-## 初始配置
+## Configuration
 
-首次使用前，需要设置 API 密钥：
+Before first use, configure your DeepSeek API key:
+
+1. Visit [DeepSeek](https://deepseek.com) to obtain your API key
+2. Configure the API key:
 
 ```bash
 i18n-manager config --set-api-key YOUR_API_KEY
 ```
 
-查看当前配置：
+## Usage
+
+### 1. Smart Translation
+
+Translate with auto-generated key:
+
 ```bash
-i18n-manager config --show
+i18n-manager translate "Text to translate"
 ```
 
-## 特性
+Translate with custom key:
 
-- 🚀 智能翻译：自动生成合适的翻译键并翻译到多种语言
-- 🔄 自动同步：自动同步简体中文(zh)到中国大陆(zh_CN)的翻译
-- 📝 手动添加：支持手动添加新的翻译条目
-- 🔍 翻译检查：检查所有语言文件中缺失的翻译
-- 📋 键值列表：查看所有已存在的翻译键
-- 🔒 安全确认：更新已存在的翻译时需要确认
-- ⚙️ 配置管理：支持通过配置文件管理 API 密钥等设置
-
-## 支持的语言
-
-- English (en)
-- 简体中文 (zh/zh_CN)
-- 繁體中文 (zh_TW)
-
-## 使用方法
-
-### 基础参数
-
-工具支持以下全局参数：
-
-- `--path`：properties 文件所在目录路径（默认为当前目录）
-- `--api-key`：临时使用的翻译 API 密钥（可选，优先级高于配置文件）
-
-### 可用命令
-
-1. 配置管理
 ```bash
-i18n-manager config --set-api-key YOUR_API_KEY  # 设置 API 密钥
-i18n-manager config --show                      # 显示当前配置
+i18n-manager translate "Text to translate" --key "custom.key.name"
 ```
 
-2. 智能翻译
+### 2. Manual Translation Addition
+
+Add complete multilingual translations:
+
 ```bash
-i18n-manager translate "需要翻译的文本"
+i18n-manager add \
+    --key "custom.key.name" \
+    --zh "简体中文" \
+    --en "English" \
+    --zh-tw "繁體中文"
 ```
 
-3. 手动添加翻译
+Or add partial translations:
+
 ```bash
-i18n-manager add <translation.key> [--en "English text"] [--zh "中文文本"] [--zh_TW "繁體中文文本"]
+i18n-manager add \
+    --key "custom.key.name" \
+    --zh "简体中文" \
+    --en "English"
 ```
 
-4. 检查缺失的翻译
-```bash
-i18n-manager check
-```
+### 3. View and Check
 
-5. 列出所有翻译键
+List all translation keys:
+
 ```bash
 i18n-manager list
 ```
 
-### 示例
+Check for missing translations:
 
-1. 使用自定义路径：
 ```bash
-i18n-manager --path ./i18n translate "Hello World"
+i18n-manager check
 ```
 
-2. 添加多语言翻译：
+### 4. Configuration Management
+
+Set API key:
+
 ```bash
-i18n-manager add welcome.message --en "Welcome" --zh "欢迎" --zh_TW "歡迎"
+i18n-manager config --set-api-key YOUR_API_KEY
 ```
 
-## 文件结构
+View current configuration:
 
-工具管理以下属性文件：
-
-```
-message-application.properties        # 英文（默认）
-message-application_zh.properties     # 简体中文
-message-application_zh_CN.properties  # 简体中文（自动同步自 zh）
-message-application_zh_TW.properties  # 繁体中文
+```bash
+i18n-manager config --show
 ```
 
-## 配置文件
+## Configuration File
 
-配置文件位于：
+Configuration files are located at:
+
 - Linux/macOS: `~/.config/i18n-manager/config.json`
+- Windows: `%APPDATA%\i18n-manager\config.json`
 
-包含以下配置项：
-- `api_key`: API 密钥
-- `default_path`: 默认工作目录
-- `default_source_lang`: 默认源语言
-- `default_target_langs`: 默认目标语言列表
+Contains the following settings:
 
-## 最佳实践
+- `api_key`: API key
+- `default_path`: Default working directory
+- `default_source_lang`: Default source language
+- `default_target_langs`: Default target language list
 
-1. 在添加新翻译之前，建议先使用 `check` 命令检查现有翻译是否完整
-2. 使用 `translate` 命令可以确保翻译键的一致性和翻译质量
-3. 定期检查和更新翻译以保持所有语言版本的同步
-4. 妥善保管 API 密钥，不要将其提交到版本控制系统
+## Key Naming Convention
 
-## 卸载
+Generated keys follow these conventions:
 
-如果需要卸载工具：
+- Use lowercase letters, numbers, and dots (.)
+- Use dots (.) as hierarchy separators
+- Use common prefixes for categorization:
+  - `error.` - Error messages
+  - `success.` - Success messages
+  - `info.` - Information prompts
+  - `label.` - UI labels
+  - `button.` - Button text
+  - `title.` - Page/section titles
+  - `msg.` - General messages
+  - `validation.` - Validation messages
+
+Examples:
+
+- `validation.username.notEmpty`
+- `success.data.saved`
+- `button.submit.text`
+
+## File Structure
+
+The tool manages the following files in the specified directory:
+
+- `message-application.properties` - English translations
+- `message-application_zh.properties` - Simplified Chinese translations
+- `message-application_zh_TW.properties` - Traditional Chinese translations
+
+## Uninstallation
+
+To uninstall the tool:
+
+### Automatic Uninstallation (Recommended)
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/uninstall.sh | bash
 ```
 
-卸载脚本会询问是否同时删除配置文件。
+### Manual Uninstallation
 
-## 贡献
+1. Remove executable
 
-欢迎提交 Issue 和 Pull Request！
+```bash
+# Linux/macOS
+rm $(which i18n-manager)
 
-## 许可证
+# Windows
+del C:\path\to\i18n-manager.exe
+```
+
+2. Remove configuration files (optional)
+
+```bash
+# Linux/macOS
+rm -rf ~/.config/i18n-manager
+
+# Windows
+rd /s /q %APPDATA%\i18n-manager
+```
+
+## Development
+
+1. Clone the project:
+
+```bash
+git clone https://github.com/yourusername/i18n-manager.git
+```
+
+2. Install dependencies:
+
+```bash
+pdm install
+```
+
+3. Run tests:
+
+```bash
+pdm run test
+```
+
+## Contributing
+
+Pull requests and issue reports are welcome!
+
+## License
 
 MIT License
