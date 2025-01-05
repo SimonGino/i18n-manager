@@ -1,5 +1,17 @@
-# i18n-manager
-[简体中文](README_CN.md)  ![Build Status](https://github.com/SimonGino/i18n-manager/actions/workflows/build.yml/badge.svg)  
+# 🌍 i18n-manager
+
+<div align="center">
+
+[![Build Status](https://github.com/SimonGino/i18n-manager/actions/workflows/build.yml/badge.svg)](https://github.com/SimonGino/i18n-manager/actions)
+[![Release](https://img.shields.io/github/v/release/SimonGino/i18n-manager?style=flat-square&logo=github&color=blue)](https://github.com/SimonGino/i18n-manager/releases/latest)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&logo=bookstack)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/SimonGino/i18n-manager?style=flat-square&logo=github)](https://github.com/SimonGino/i18n-manager/stargazers)
+
+[English](README.md) | [简体中文](README_CN.md)
+
+</div>
+
+---
 
 A powerful multilingual properties file management tool designed for Java project internationalization (i18n). This tool helps you easily manage and synchronize translations in `message-application.properties` files.
 

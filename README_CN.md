@@ -1,7 +1,17 @@
-# i18n-manager
-![Build Status](https://github.com/SimonGino/i18n-manager/actions/workflows/build.yml/badge.svg)  
+# 🌍 i18n-manager
 
-一个强大的多语言属性文件管理工具，专为 Java 项目的国际化(i18n)设计。该工具可以帮助您轻松管理和同步 `message-application.properties` 文件中的多语言翻译。
+<div align="center">
+
+[![Build Status](https://github.com/SimonGino/i18n-manager/actions/workflows/build.yml/badge.svg)](https://github.com/SimonGino/i18n-manager/actions)
+[![Release](https://img.shields.io/github/v/release/SimonGino/i18n-manager?style=flat-square&logo=github&color=blue)](https://github.com/SimonGino/i18n-manager/releases/latest)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&logo=bookstack)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/SimonGino/i18n-manager?style=flat-square&logo=github)](https://github.com/SimonGino/i18n-manager/stargazers)
+
+[English](README.md) | [简体中文](README_CN.md)
+
+</div>
+
+---
 
 ## 特性
 
