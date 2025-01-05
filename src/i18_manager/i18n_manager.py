@@ -1,70 +1,86 @@
-import json
 import codecs
 import argparse
 import os
 import sys
-from typing import Dict, Optional
+from typing import Dict
+from openai import OpenAI
 from dataclasses import dataclass
-import requests
+import json
 from i18_manager.config import Config
 
 
 @dataclass
 class TranslationResponse:
     key: str
-    translations: Dict[str, str]
-    status: bool
-    message: Optional[str] = None
+    translations: dict
+    status: bool = True
+    message: str = ""
 
 
 class TranslationService:
     def __init__(self, api_key: str):
-        self.api_url = "https://api.dify.ai/v1/workflows/run"
-        self.api_key = api_key
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url="https://api.deepseek.com"
+        )
 
     def translate(self, text: str) -> TranslationResponse:
-        """调用Dify API获取翻译结果"""
         try:
-            headers = {
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {self.api_key}'
-            }
-
-            payload = {
-                "inputs": {
-                    "input": text
+            # 系统提示词保持不变
+            system_prompt = """You are a translation API that ONLY responds in JSON format.
+            ALWAYS follow this exact format for ANY input:
+            {
+                "key": "<java_properties_key>",
+                "translations": {
+                    "en": "<english_translation>",
+                    "zh": "<simplified_chinese>",
+                    "zh_TW": "<traditional_chinese>"
                 },
-                "response_mode": "blocking",
-                "user": "i18n-tool"
+                "status": "success"
             }
 
-            response = requests.post(
-                self.api_url,
-                headers=headers,
-                json=payload
+            Key Generation Rules:
+            1. Use lowercase letters, numbers, and dots (.)
+            2. Use dots (.) as separators for hierarchical keys
+            3. Use common prefixes for different modules/categories:
+               - error. for error messages
+               - success. for success messages
+               - info. for information messages
+               - label. for UI labels
+               - button. for button texts
+               - title. for page/section titles
+               - msg. for general messages
+               - validation. for validation messages"""
+
+            # 调用 DeepSeek API
+            response = self.client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Translate this text: {text}"}
+                ],
+                stream=False
             )
 
-            if response.status_code == 200:
-                data = response.json()
-                # 解析输出中的JSON字符串
-                translation_data = json.loads(data['data']['outputs']['output'])
+            # 解析响应
+            result = json.loads(response.choices[0].message.content)
 
-                return TranslationResponse(
-                    key=translation_data['key'],
-                    translations=translation_data['translations'],
-                    status=translation_data['status'] == 'success'
-                )
-            else:
-                return TranslationResponse(
-                    key='',
-                    translations={},
-                    status=False,
-                    message=f"API调用失败: {response.status_code}"
-                )
+            return TranslationResponse(
+                key=result['key'],
+                translations=result['translations'],
+                status=True
+            )
 
+        except json.JSONDecodeError as e:
+            return TranslationResponse(
+                key="",
+                translations={},
+                status=False,
+                message=f"JSON解析错误: {str(e)}"
+            )
         except Exception as e:
             return TranslationResponse(
-                key='',
+                key="",
                 translations={},
                 status=False,
                 message=f"翻译服务错误: {str(e)}"
@@ -318,8 +334,12 @@ def main():
 
     args = parser.parse_args()
 
-    # 加载配置
+      # 加载配置
     config = Config()
+    if args.path:
+        config.base_path = args.path
+    if args.api_key:  # 使用命令行提供的 API key
+        config.api_key = args.api_key
     
     # 如果是配置命令，直接处理
     if args.command == 'config':
