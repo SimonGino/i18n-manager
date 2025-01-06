@@ -164,31 +164,33 @@ class I18nManager:
             if lang.startswith("zh"):
                 text = text.encode('unicode_escape').decode()
 
-            # 更新或添加翻译
-            if key in existing_translations:
-                # 更新现有值
-                lines = []
-                with codecs.open(full_path, 'r', 'utf-8') as f:
-                    for line in f:
+            # 读取所有现有内容
+            existing_lines = []
+            key_found = False
+            
+            with codecs.open(full_path, 'r', 'utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
                         if line.startswith(f"{key}="):
-                            lines.append(f"{key}={text}\n")
+                            # 替换现有的key
+                            existing_lines.append(f"{key}={text}")
+                            key_found = True
                         else:
-                            lines.append(line)
-                
-                # 确保最后一行有换行符
-                if lines and not lines[-1].endswith('\n'):
-                    lines[-1] += '\n'
-                
-                with codecs.open(full_path, 'w', 'utf-8') as f:
-                    f.writelines(lines)
-            else:
-                # 追加新值前确保文件以换行符结束
-                with codecs.open(full_path, 'r+', 'utf-8') as f:
-                    content = f.read()
-                    f.seek(0, 2)  # 移动到文件末尾
-                    if content and not content.endswith('\n'):
-                        f.write('\n')  # 如果最后一行没有换行符，添加一个
-                    f.write(f"{key}={text}\n")
+                            existing_lines.append(line)
+                    else:
+                        existing_lines.append(line)
+
+            # 如果key不存在，添加到文件末尾
+            if not key_found:
+                if existing_lines and existing_lines[-1] != '':
+                    existing_lines.append('')  # 添加空行
+                existing_lines.append(f"{key}={text}")
+
+            # 写入文件
+            with codecs.open(full_path, 'w', 'utf-8') as f:
+                f.write('\n'.join(existing_lines))
+                f.write('\n')  # 确保文件以换行符结束
 
             print(f"已更新 {filename}")
 
