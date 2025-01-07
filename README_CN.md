@@ -148,7 +148,9 @@ i18n-manager config --show
 
 ### 自动卸载（推荐）
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/uninstall.sh -o uninstall.sh
+chmod +x uninstall.sh
+./uninstall.sh
 ```
 
 ### 手动卸载
