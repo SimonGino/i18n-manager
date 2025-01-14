@@ -12,6 +12,9 @@ requires-python = ">=3.9,<3.13"
 readme = "README.md"
 license = {text = "MIT"}
 
+[project.scripts]
+i18n-manager = "i18_manager.i18n_manager:main"
+
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
@@ -26,4 +29,3 @@ build = [
 
 [tool.pdm.scripts]
 build = "python build.py"
-i18n-manager = "i18_manager.i18n_manager:main"

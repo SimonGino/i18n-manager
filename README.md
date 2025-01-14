@@ -17,7 +17,7 @@ A powerful multilingual properties file management tool designed for Java projec
 
 ## Features
 
-- 🤖 Smart Translation: Automated text translation using DeepSeek AI
+- 🤖 Smart Translation: Automated text translation using DeepSeek AI or Qwen (Tongyi) AI
 - 🔑 Smart Key Generation: Automatically generates keys compliant with Java properties standards
 - 🔄 Auto Sync: Automatic synchronization from Simplified Chinese (zh) to Traditional Chinese (zh_TW)
 - 📝 Manual Management: Support for manual addition and update of translations
@@ -43,12 +43,18 @@ Download the binary for your platform from the [Releases](https://github.com/Sim
 
 ## Configuration
 
-Before first use, configure your DeepSeek API key:
+Before first use, configure your API key:
 
-1. Visit [DeepSeek Dashboard](https://platform.deepseek.com/api_keys) to get your API key.
-2. Configure the API key:
+1. Get your API key:
+   - For DeepSeek: Visit [DeepSeek Dashboard](https://platform.deepseek.com/api_keys)
+   - For Qwen: Visit [DashScope Console](https://dashscope.console.aliyun.com/apiKey)
 
+2. Configure the API key and provider:
 ```bash
+# Set AI provider (deepseek or qwen)
+i18n-manager config --set-ai-provider qwen
+
+# Set API key
 i18n-manager config --set-api-key YOUR_API_KEY
 ```
 

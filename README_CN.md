@@ -15,7 +15,7 @@
 
 ## 特性
 
-- 🤖 智能翻译：利用 DeepSeek AI 自动翻译文本
+- 🤖 智能翻译：支持使用 DeepSeek AI 或通义千问 AI 自动翻译文本
 - 🔑 智能生成 key：自动生成符合 Java properties 规范的 key
 - 🔄 自动同步：自动同步中文简体(zh)到繁体(zh_TW)
 - 📝 手动管理：支持手动添加和更新翻译
@@ -38,11 +38,18 @@ curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/install
 
 ## 配置
 
-首次使用前，需要配置 DeepSeek API key：
+首次使用前，需要配置 API key：
 
-1. 前往 [DeepSeek Dashboard](https://platform.deepseek.com/api_keys) 获取您的 API 密钥。
-2. 配置 API key：
+1. 获取 API key：
+   - DeepSeek：前往 [DeepSeek Dashboard](https://platform.deepseek.com/api_keys)
+   - 通义千问：前往 [灵积模型服务控制台](https://dashscope.console.aliyun.com/apiKey)
+
+2. 配置 API key 和提供商：
 ```bash
+# 设置 AI 提供商（deepseek 或 qwen）
+i18n-manager config --set-ai-provider qwen
+
+# 设置 API key
 i18n-manager config --set-api-key YOUR_API_KEY
 ```
 

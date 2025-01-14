@@ -7,6 +7,7 @@ from openai import OpenAI
 from dataclasses import dataclass
 import json
 from i18_manager.config import Config
+from i18_manager.ai_service import AIServiceFactory
 
 
 @dataclass
@@ -18,11 +19,10 @@ class TranslationResponse:
 
 
 class TranslationService:
-    def __init__(self, api_key: str):
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url="https://api.deepseek.com"
-        )
+    def __init__(self, config: Config):
+        ai_config = config.get_ai_config()
+        provider = config.config.get("ai_provider", "deepseek")
+        self.ai_service = AIServiceFactory.create(provider, ai_config)
 
     def translate(self, text: str) -> TranslationResponse:
         try:
@@ -53,17 +53,15 @@ class TranslationService:
                - validation. for validation messages"""
 
             # 调用 DeepSeek API
-            response = self.client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Translate this text: {text}"}
-                ],
-                stream=False
-            )
+            response = self.ai_service.chat([
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Translate this text: {text}"}
+            ])
 
-            # 解析响应
-            result = json.loads(response.choices[0].message.content)
+            if not response["success"]:
+                raise Exception(response["error"])
+
+            result = json.loads(response["content"])
 
             return TranslationResponse(
                 key=result['key'],
@@ -331,27 +329,46 @@ def main():
 
     # 添加配置管理命令
     config_parser = subparsers.add_parser('config', help='管理配置')
-    config_parser.add_argument('--set-api-key', help='设置API密钥')
-    config_parser.add_argument('--show', action='store_true', help='显示当前配置')
+    config_group = config_parser.add_mutually_exclusive_group(required=True)
+    config_group.add_argument('--set-api-key', help='设置API密钥')
+    config_group.add_argument('--set-ai-provider', 
+                            choices=['deepseek', 'qwen'],
+                            help='设置 AI 提供商 (deepseek 或 qwen)')
+    config_group.add_argument('--show', action='store_true', help='显示当前配置')
 
     args = parser.parse_args()
 
-      # 加载配置
+    # 加载配置
     config = Config()
     if args.path:
         config.base_path = args.path
-    if args.api_key:  # 使用命令行提供的 API key
+    if args.api_key:
         config.api_key = args.api_key
     
-    # 如果是配置命令，直接处理
+    # 处理 config 命令
     if args.command == 'config':
         if args.set_api_key:
             config.set_api_key(args.set_api_key)
             print("API密钥已更新")
-        if args.show:
+        elif args.set_ai_provider:
+            config.set_ai_provider(args.set_ai_provider)
+            print(f"AI 提供商已设置为: {args.set_ai_provider}")
+        elif args.show:
             print("\n当前配置:")
-            print(f"API密钥: {'*' * 8 + config.get_api_key()[-4:] if config.get_api_key() else '未设置'}")
-            print(f"默认路径: {config.config.get('default_path', '.')}")
+            current_provider = config.config.get("ai_provider", "deepseek")
+            print(f"当前 AI 提供商: {current_provider}")
+            print("\nAI 提供商配置:")
+            for provider, settings in config.config.get("ai_providers", {}).items():
+                print(f"\n{provider}:")
+                api_key = settings.get("api_key", "")
+                if api_key:
+                    masked_key = f"{'*' * (len(api_key) - 4)}{api_key[-4:]}" if len(api_key) > 4 else "****"
+                else:
+                    masked_key = "未设置"
+                print(f"  API密钥: {masked_key}")
+                print(f"  接口地址: {settings.get('base_url', '未设置')}")
+            
+            print(f"\n默认路径: {config.config.get('default_path', '.')}")
         return
 
     # 如果没有提供命令，显示帮助信息并退出
@@ -370,7 +387,7 @@ def main():
         print("i18n-manager --api-key YOUR_API_KEY <command>")
         sys.exit(1)
 
-    translation_service = TranslationService(api_key)
+    translation_service = TranslationService(config)
     manager = I18nManager(args.path, translation_service)
 
     # 处理其他命令
