@@ -191,11 +191,18 @@ coverage.html
 
 # 操作系统
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # 项目特定
+*.log
+.env
 config.json
-i18n-manager
+/i18n-manager
 
 # GoReleaser
 dist/
