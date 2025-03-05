@@ -87,7 +87,11 @@ func HandleTranslate(c *cli.Context) error {
 	// Ask for confirmation
 	fmt.Print("\nDo you want to add these translations? (y/N): ")
 	var response string
-	fmt.Scanln(&response)
+	if _, err := fmt.Scanln(&response); err != nil {
+		// 如果用户直接按回车，Scanln 会返回错误，这种情况我们视为取消操作
+		fmt.Println("Translation cancelled")
+		return nil
+	}
 
 	if strings.ToLower(response) != "y" {
 		fmt.Println("Translation cancelled")
