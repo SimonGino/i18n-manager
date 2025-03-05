@@ -42,6 +42,11 @@ func HandleTranslate(c *cli.Context) error {
 	// Save source language text
 	translations[sourceLang.Code] = text
 
+	// If source language is zh, also save for zh_CN
+	if sourceLang.Code == "zh" {
+		translations["zh_CN"] = text
+	}
+
 	// If no key provided, translate to English first for key generation
 	if key == "" {
 		// Get English translation for key generation
