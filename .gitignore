@@ -162,3 +162,40 @@ cython_debug/
 .idea/
 pdm.lock
 tests/
+
+# Go相关
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# IDE相关
+.vscode/
+*.swp
+*.swo
+*~
+
+# 构建输出
+bin/
+
+# 依赖管理
+vendor/
+
+# 测试覆盖率
+coverage.txt
+coverage.html
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 项目特定
+config.json
+i18n-manager
+
+# GoReleaser
+dist/

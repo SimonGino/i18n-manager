@@ -37,9 +37,17 @@ Download the binary for your platform from the [Releases](https://github.com/Sim
 
 ### Supported Platforms
 
-- Linux (amd64)
-- macOS (amd64, arm64)
-- Windows (amd64) - Coming soon
+- Linux
+  - x86_64 (amd64)
+  - i386 (32-bit)
+  - arm64
+  - armv7
+- macOS
+  - x86_64 (amd64)
+  - arm64 (Apple Silicon)
+- Windows
+  - x86_64 (64-bit)
+  - i386 (32-bit)
 
 ## Configuration
 
@@ -212,13 +220,13 @@ git clone https://github.com/yourusername/i18n-manager.git
 2. Install dependencies:
 
 ```bash
-pdm install
+go mod download
 ```
 
 3. Run tests:
 
 ```bash
-pdm run test
+go test ./...
 ```
 
 ## Contributing
