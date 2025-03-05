@@ -36,23 +36,4 @@ jobs:
         run: go build -v ./cmd/i18n-manager/main.go
 
       - name: Test
-        run: go test -v ./...
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/download-artifact@v3
-      with:
-        name: binaries
-        path: dist
-
-    - name: Create Release
-      id: create_release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: dist/*
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        run: go test -v ./... 
