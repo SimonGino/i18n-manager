@@ -35,6 +35,17 @@ func init() {
 }
 
 func getConfigPath() string {
+	// 优先使用 ~/.config 目录
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		configDir := filepath.Join(homeDir, ".config")
+		// 检查 ~/.config 目录是否存在
+		if _, err := os.Stat(configDir); err == nil {
+			return filepath.Join(configDir, "i18n-manager")
+		}
+	}
+
+	// 如果 ~/.config 不可用，则使用系统默认的配置目录
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return filepath.Join(".", ".config", "i18n-manager")
@@ -124,6 +135,8 @@ func HandleConfig(c *cli.Context) error {
 	}
 
 	if c.Bool("show") {
+		configPath := getConfigFilePath()
+		fmt.Printf("Config file path: %s\n\n", configPath)
 		data, err := json.MarshalIndent(currentConfig, "", "  ")
 		if err != nil {
 			return fmt.Errorf("error formatting config: %v", err)

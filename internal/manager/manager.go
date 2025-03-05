@@ -24,29 +24,43 @@ func HandleTranslate(c *cli.Context) error {
 
 	text := c.Args().First()
 	key := c.String("key")
-	if key == "" {
-		key = generateKey(text)
-	}
 
 	translations := make(map[string]string)
 
-	// 获取源语言配置
+	// Get source language configuration
 	sourceLang := config.GetSourceLang()
 	if sourceLang == nil {
 		return fmt.Errorf("no source language configured")
 	}
 
-	// 获取目标语言配置
+	// Get target language configuration
 	targetLangs := config.GetTargetLangs()
 	if len(targetLangs) == 0 {
 		return fmt.Errorf("no target languages configured")
 	}
 
-	// 保存源语言文本
+	// Save source language text
 	translations[sourceLang.Code] = text
 
-	// 翻译到目标语言
+	// If no key provided, translate to English first for key generation
+	if key == "" {
+		// Get English translation for key generation
+		englishText, err := ai.Translate(ai.TranslationRequest{
+			Text:       text,
+			SourceLang: sourceLang.Code,
+			TargetLang: "en",
+		})
+		if err != nil {
+			return fmt.Errorf("failed to generate key: %v", err)
+		}
+		key = generateKey(englishText)
+	}
+
+	// Translate to other target languages
 	for _, targetLang := range targetLangs {
+		if targetLang.Code == "en" && translations["en"] != "" {
+			continue // Skip if English translation already exists
+		}
 		translated, err := ai.Translate(ai.TranslationRequest{
 			Text:       text,
 			SourceLang: sourceLang.Code,
@@ -58,11 +72,28 @@ func HandleTranslate(c *cli.Context) error {
 		translations[targetLang.Code] = translated
 	}
 
+	// Print translations to be added
+	fmt.Printf("\nTranslations to be added:\n")
+	fmt.Printf("Key: %s\n", key)
+	for lang, value := range translations {
+		fmt.Printf("%s: %s\n", lang, value)
+	}
+
+	// Ask for confirmation
+	fmt.Print("\nDo you want to add these translations? (y/N): ")
+	var response string
+	fmt.Scanln(&response)
+
+	if strings.ToLower(response) != "y" {
+		fmt.Println("Translation cancelled")
+		return nil
+	}
+
 	if err := saveTranslations(key, translations); err != nil {
 		return fmt.Errorf("error saving translations: %v", err)
 	}
 
-	fmt.Printf("Successfully added translations for key: %s\n", key)
+	fmt.Printf("Successfully added translations with key: %s\n", key)
 	return nil
 }
 
@@ -116,7 +147,7 @@ func HandleList(c *cli.Context) error {
 		return fmt.Errorf("error loading translations: %v", err)
 	}
 
-	// 如果指定了key，只显示该key的翻译
+	// If key is specified, show only that key's translations
 	if key := c.String("key"); key != "" {
 		found := false
 		for _, t := range translations {
@@ -136,7 +167,7 @@ func HandleList(c *cli.Context) error {
 		return nil
 	}
 
-	// 显示所有翻译
+	// Show all translations
 	for _, t := range translations {
 		fmt.Printf("Key: %s\n", t.Key)
 		for lang, value := range t.Values {
@@ -177,18 +208,33 @@ func HandleCheck(c *cli.Context) error {
 }
 
 func generateKey(text string) string {
+	// 将文本转换为小写
 	key := strings.ToLower(text)
-	key = strings.ReplaceAll(key, " ", ".")
-	key = strings.ReplaceAll(key, "'", "")
-	key = strings.ReplaceAll(key, "\"", "")
-	key = strings.ReplaceAll(key, ":", "")
-	key = strings.ReplaceAll(key, "?", "")
-	key = strings.ReplaceAll(key, "!", "")
-	key = strings.ReplaceAll(key, ",", "")
-	key = strings.ReplaceAll(key, ".", ".")
 
+	// 移除标点符号和特殊字符
+	key = strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == ' ' {
+			return r
+		}
+		return -1
+	}, key)
+
+	// 将空格替换为点号
+	key = strings.ReplaceAll(key, " ", ".")
+
+	// 处理连续的点号
+	for strings.Contains(key, "..") {
+		key = strings.ReplaceAll(key, "..", ".")
+	}
+
+	// 移除开头和结尾的点号
+	key = strings.Trim(key, ".")
+
+	// 限制长度
 	if len(key) > 50 {
 		key = key[:50]
+		// 确保不以点号结尾
+		key = strings.TrimRight(key, ".")
 	}
 
 	return "msg." + key
@@ -246,31 +292,65 @@ func loadAllTranslations() ([]Translation, error) {
 	return result, nil
 }
 
-func saveTranslations(key string, translations map[string]string) error {
-	// 保存到每个语言对应的文件
-	for lang, value := range translations {
-		filename := config.GetPropertiesFilePath(lang)
+// Convert Chinese characters to Unicode escape sequences
+func encodeToUnicode(s string) string {
+	var result strings.Builder
+	for _, r := range s {
+		if r > 127 {
+			result.WriteString(fmt.Sprintf("\\u%04x", r))
+		} else {
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
+}
 
-		// 读取现有文件
-		existingContent := make(map[string]string)
+func saveTranslations(key string, translations map[string]string) error {
+	cfg := config.GetConfig()
+
+	// Process each configured language mapping
+	for _, mapping := range cfg.Language.Mappings {
+		filename := config.GetPropertiesFilePath(mapping.Code)
+		value, exists := translations[mapping.Code]
+
+		// Skip if no translation provided for this language
+		if !exists {
+			continue
+		}
+
+		// Read existing file content while preserving order
+		var lines []string
 		file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
 			return fmt.Errorf("error opening %s: %v", filename, err)
 		}
 
 		scanner := bufio.NewScanner(file)
+		keyFound := false
 		for scanner.Scan() {
-			line := strings.TrimSpace(scanner.Text())
+			line := scanner.Text() // Don't trim to preserve formatting
 			if line == "" || strings.HasPrefix(line, "#") {
+				lines = append(lines, line)
 				continue
 			}
 
 			parts := strings.SplitN(line, "=", 2)
 			if len(parts) != 2 {
+				lines = append(lines, line)
 				continue
 			}
 
-			existingContent[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+			currentKey := strings.TrimSpace(parts[0])
+			if currentKey == key {
+				// Encode value if it's Chinese
+				if strings.Contains(mapping.Code, "zh") {
+					value = encodeToUnicode(value)
+				}
+				lines = append(lines, fmt.Sprintf("%s=%s", currentKey, value))
+				keyFound = true
+			} else {
+				lines = append(lines, line)
+			}
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -278,10 +358,19 @@ func saveTranslations(key string, translations map[string]string) error {
 			return fmt.Errorf("error reading %s: %v", filename, err)
 		}
 
-		// 更新或添加新的翻译
-		existingContent[key] = value
+		// If key not found, append it to the end
+		if !keyFound {
+			if len(lines) > 0 && lines[len(lines)-1] != "" {
+				lines = append(lines, "") // Add empty line before new entry
+			}
+			// Encode value if it's Chinese
+			if strings.Contains(mapping.Code, "zh") {
+				value = encodeToUnicode(value)
+			}
+			lines = append(lines, fmt.Sprintf("%s=%s", key, value))
+		}
 
-		// 重写文件
+		// Rewrite the file
 		if err := file.Truncate(0); err != nil {
 			file.Close()
 			return fmt.Errorf("error truncating %s: %v", filename, err)
@@ -293,10 +382,12 @@ func saveTranslations(key string, translations map[string]string) error {
 		}
 
 		writer := bufio.NewWriter(file)
-		for k, v := range existingContent {
-			if _, err := fmt.Fprintf(writer, "%s=%s\n", k, v); err != nil {
-				file.Close()
-				return fmt.Errorf("error writing to %s: %v", filename, err)
+		for i, line := range lines {
+			if i > 0 || line != "" { // Skip initial empty line
+				if _, err := fmt.Fprintln(writer, line); err != nil {
+					file.Close()
+					return fmt.Errorf("error writing to %s: %v", filename, err)
+				}
 			}
 		}
 
