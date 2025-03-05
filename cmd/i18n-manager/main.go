@@ -56,8 +56,15 @@ func main() {
 			{
 				Name:    "list",
 				Aliases: []string{"l"},
-				Usage:   "List all translation keys",
-				Action:  manager.HandleList,
+				Usage:   "List all translation keys or show translations for a specific key",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "key",
+						Aliases: []string{"k"},
+						Usage:   "Show translations for a specific key",
+					},
+				},
+				Action: manager.HandleList,
 			},
 			{
 				Name:    "check",

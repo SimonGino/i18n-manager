@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/SimonGino/i18n-manager/internal/ai"
@@ -27,25 +28,34 @@ func HandleTranslate(c *cli.Context) error {
 		key = generateKey(text)
 	}
 
-	cfg := config.GetConfig()
 	translations := make(map[string]string)
 
-	// 从中文翻译到其他语言
-	for _, targetLang := range cfg.DefaultTargetLangs {
-		if targetLang == cfg.DefaultSourceLang {
-			translations[targetLang] = text
-			continue
-		}
+	// 获取源语言配置
+	sourceLang := config.GetSourceLang()
+	if sourceLang == nil {
+		return fmt.Errorf("no source language configured")
+	}
 
+	// 获取目标语言配置
+	targetLangs := config.GetTargetLangs()
+	if len(targetLangs) == 0 {
+		return fmt.Errorf("no target languages configured")
+	}
+
+	// 保存源语言文本
+	translations[sourceLang.Code] = text
+
+	// 翻译到目标语言
+	for _, targetLang := range targetLangs {
 		translated, err := ai.Translate(ai.TranslationRequest{
 			Text:       text,
-			SourceLang: cfg.DefaultSourceLang,
-			TargetLang: targetLang,
+			SourceLang: sourceLang.Code,
+			TargetLang: targetLang.Code,
 		})
 		if err != nil {
-			return fmt.Errorf("error translating to %s: %v", targetLang, err)
+			return fmt.Errorf("error translating to %s: %v", targetLang.Code, err)
 		}
-		translations[targetLang] = translated
+		translations[targetLang.Code] = translated
 	}
 
 	if err := saveTranslations(key, translations); err != nil {
@@ -63,14 +73,12 @@ func HandleAdd(c *cli.Context) error {
 	}
 
 	translations := make(map[string]string)
-	if zh := c.String("zh"); zh != "" {
-		translations["zh"] = zh
-	}
-	if en := c.String("en"); en != "" {
-		translations["en"] = en
-	}
-	if zhTW := c.String("zh-tw"); zhTW != "" {
-		translations["zh_TW"] = zhTW
+
+	// 从命令行参数获取各语言的翻译
+	for _, mapping := range config.GetConfig().Language.Mappings {
+		if value := c.String(mapping.Code); value != "" {
+			translations[mapping.Code] = value
+		}
 	}
 
 	if len(translations) == 0 {
@@ -85,16 +93,55 @@ func HandleAdd(c *cli.Context) error {
 	return nil
 }
 
+func decodeUnicode(s string) string {
+	var result string
+	for len(s) > 0 {
+		if strings.HasPrefix(s, "\\u") && len(s) >= 6 {
+			code, err := strconv.ParseInt(s[2:6], 16, 32)
+			if err == nil {
+				result += string(rune(code))
+				s = s[6:]
+				continue
+			}
+		}
+		result += string(s[0])
+		s = s[1:]
+	}
+	return result
+}
+
 func HandleList(c *cli.Context) error {
 	translations, err := loadAllTranslations()
 	if err != nil {
 		return fmt.Errorf("error loading translations: %v", err)
 	}
 
+	// 如果指定了key，只显示该key的翻译
+	if key := c.String("key"); key != "" {
+		found := false
+		for _, t := range translations {
+			if t.Key == key {
+				fmt.Printf("Key: %s\n", t.Key)
+				for lang, value := range t.Values {
+					decodedValue := decodeUnicode(value)
+					fmt.Printf("  %s: %s\n", lang, decodedValue)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("key '%s' not found", key)
+		}
+		return nil
+	}
+
+	// 显示所有翻译
 	for _, t := range translations {
 		fmt.Printf("Key: %s\n", t.Key)
 		for lang, value := range t.Values {
-			fmt.Printf("  %s: %s\n", lang, value)
+			decodedValue := decodeUnicode(value)
+			fmt.Printf("  %s: %s\n", lang, decodedValue)
 		}
 		fmt.Println()
 	}
@@ -109,13 +156,12 @@ func HandleCheck(c *cli.Context) error {
 	}
 
 	cfg := config.GetConfig()
-	allLangs := append([]string{cfg.DefaultSourceLang}, cfg.DefaultTargetLangs...)
-
 	var missingCount int
+
 	for _, t := range translations {
-		for _, lang := range allLangs {
-			if _, ok := t.Values[lang]; !ok {
-				fmt.Printf("Missing translation for key '%s' in language '%s'\n", t.Key, lang)
+		for _, mapping := range cfg.Language.Mappings {
+			if _, ok := t.Values[mapping.Code]; !ok {
+				fmt.Printf("Missing translation for key '%s' in language '%s'\n", t.Key, mapping.Code)
 				missingCount++
 			}
 		}
@@ -131,7 +177,6 @@ func HandleCheck(c *cli.Context) error {
 }
 
 func generateKey(text string) string {
-	// 简单的key生成逻辑，可以根据需要扩展
 	key := strings.ToLower(text)
 	key = strings.ReplaceAll(key, " ", ".")
 	key = strings.ReplaceAll(key, "'", "")
@@ -149,23 +194,13 @@ func generateKey(text string) string {
 	return "msg." + key
 }
 
-func getPropertiesFilePath(lang string) string {
-	filename := "message-application"
-	if lang != "" {
-		filename += "_" + lang
-	}
-	filename += ".properties"
-	return filename
-}
-
 func loadAllTranslations() ([]Translation, error) {
 	cfg := config.GetConfig()
-	allLangs := append([]string{cfg.DefaultSourceLang}, cfg.DefaultTargetLangs...)
-
 	translations := make(map[string]*Translation)
 
-	for _, lang := range allLangs {
-		filename := getPropertiesFilePath(lang)
+	// 遍历所有语言文件
+	for _, mapping := range cfg.Language.Mappings {
+		filename := config.GetPropertiesFilePath(mapping.Code)
 		file, err := os.Open(filename)
 		if os.IsNotExist(err) {
 			continue
@@ -196,7 +231,7 @@ func loadAllTranslations() ([]Translation, error) {
 					Values: make(map[string]string),
 				}
 			}
-			translations[key].Values[lang] = value
+			translations[key].Values[mapping.Code] = value
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -212,8 +247,9 @@ func loadAllTranslations() ([]Translation, error) {
 }
 
 func saveTranslations(key string, translations map[string]string) error {
+	// 保存到每个语言对应的文件
 	for lang, value := range translations {
-		filename := getPropertiesFilePath(lang)
+		filename := config.GetPropertiesFilePath(lang)
 
 		// 读取现有文件
 		existingContent := make(map[string]string)

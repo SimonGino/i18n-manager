@@ -66,6 +66,61 @@ i18n-manager config --set-ai-provider qwen
 i18n-manager config --set-api-key YOUR_API_KEY
 ```
 
+The configuration file is located at `~/.config/i18n-manager/config.json` (or `%APPDATA%\i18n-manager\config.json` on Windows). Here's an example configuration:
+
+```json
+{
+  "api_key": "your-api-key",
+  "default_path": ".",
+  "ai_provider": "deepseek",
+  "language": {
+    "file_pattern": "message-application%s.properties",
+    "mappings": [
+      {
+        "code": "en",
+        "file": "",
+        "is_source": false
+      },
+      {
+        "code": "zh",
+        "file": "_zh",
+        "is_source": true
+      },
+      {
+        "code": "zh_CN",
+        "file": "_zh_CN",
+        "is_source": true
+      },
+      {
+        "code": "zh_TW",
+        "file": "_zh_TW",
+        "is_source": false
+      }
+    ]
+  }
+}
+```
+
+### Configuration Options
+
+- `api_key`: Your AI provider API key
+- `default_path`: Default path for properties files
+- `ai_provider`: AI provider for translation (currently supports "deepseek" or "qwen")
+- `language`: Language configuration
+  - `file_pattern`: Pattern for properties files (e.g., "message-application%s.properties")
+  - `mappings`: Language mappings
+    - `code`: Language code (e.g., "en", "zh", "zh_CN")
+    - `file`: File suffix (e.g., "", "_zh", "_zh_CN")
+    - `is_source`: Whether this is a source language for translation
+
+You can modify these settings using the following commands:
+
+```bash
+i18n-manager config --set-api-key "your-api-key"
+i18n-manager config --set-ai-provider "deepseek"
+i18n-manager config --show  # Show current configuration
+```
+
 ## Usage
 
 ### 1. Smart Translation
@@ -109,6 +164,14 @@ List all translation keys:
 
 ```bash
 i18n-manager list
+```
+
+List translations for a specific key:
+
+```bash
+i18n-manager list --key "error.skill.unavailable"
+# or use the short flag
+i18n-manager list -k "error.skill.unavailable"
 ```
 
 Check for missing translations:
@@ -217,13 +280,19 @@ rd /s /q %APPDATA%\i18n-manager
 git clone https://github.com/yourusername/i18n-manager.git
 ```
 
-2. Install dependencies:
+2. Create the cmd directory structure:
+
+```bash
+mkdir -p cmd/i18n-manager
+```
+
+3. Install dependencies:
 
 ```bash
 go mod download
 ```
 
-3. Run tests:
+4. Run tests:
 
 ```bash
 go test ./...

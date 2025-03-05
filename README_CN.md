@@ -51,19 +51,59 @@ curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/install
 
 ## 配置
 
-首次使用前，需要配置您的API密钥：
+配置文件位于 `~/.config/i18n-manager/config.json`（Windows 系统位于 `%APPDATA%\i18n-manager\config.json`）。以下是一个配置示例：
 
-1. 获取API密钥：
-   - DeepSeek：访问 [DeepSeek Dashboard](https://platform.deepseek.com/api_keys)
-   - 通义千问：访问 [DashScope控制台](https://dashscope.console.aliyun.com/apiKey)
+```json
+{
+  "api_key": "your-api-key",
+  "default_path": ".",
+  "ai_provider": "deepseek",
+  "language": {
+    "file_pattern": "message-application%s.properties",
+    "mappings": [
+      {
+        "code": "en",
+        "file": "",
+        "is_source": false
+      },
+      {
+        "code": "zh",
+        "file": "_zh",
+        "is_source": true
+      },
+      {
+        "code": "zh_CN",
+        "file": "_zh_CN",
+        "is_source": true
+      },
+      {
+        "code": "zh_TW",
+        "file": "_zh_TW",
+        "is_source": false
+      }
+    ]
+  }
+}
+```
 
-2. 配置API密钥和提供商：
+### 配置选项
+
+- `api_key`: 你的 AI 提供商 API 密钥
+- `default_path`: 属性文件的默认路径
+- `ai_provider`: 翻译使用的 AI 提供商（目前支持 "deepseek" 或 "qwen"）
+- `language`: 语言配置
+  - `file_pattern`: 属性文件的命名模式（如 "message-application%s.properties"）
+  - `mappings`: 语言映射
+    - `code`: 语言代码（如 "en"、"zh"、"zh_CN"）
+    - `file`: 文件后缀（如 ""、"_zh"、"_zh_CN"）
+    - `is_source`: 是否为源语言（用于翻译）
+
+你可以使用以下命令修改这些设置：
+
 ```bash
-# 设置AI提供商 (deepseek 或 qwen)
-i18n-manager config --set-ai-provider qwen
-
-# 设置API密钥
-i18n-manager config --set-api-key YOUR_API_KEY
+i18n-manager config --set-api-key "your-api-key"
+i18n-manager config --set-ai-provider "deepseek"
+i18n-manager config --show  # 显示当前配置
 ```
 
 ## 使用方法
@@ -111,6 +151,14 @@ i18n-manager add \
 i18n-manager list
 ```
 
+查看指定键的翻译：
+
+```bash
+i18n-manager list --key "error.skill.unavailable"
+# 或使用简写
+i18n-manager list -k "error.skill.unavailable"
+```
+
 检查缺失的翻译：
 
 ```bash
@@ -130,20 +178,6 @@ i18n-manager config --set-api-key YOUR_API_KEY
 ```bash
 i18n-manager config --show
 ```
-
-## 配置文件
-
-配置文件位于：
-
-- Linux/macOS: `~/.config/i18n-manager/config.json`
-- Windows: `%APPDATA%\i18n-manager\config.json`
-
-包含以下设置：
-
-- `api_key`：API密钥
-- `default_path`：默认工作目录
-- `default_source_lang`：默认源语言
-- `default_target_langs`：默认目标语言列表
 
 ## 键命名约定
 
@@ -217,13 +251,19 @@ rd /s /q %APPDATA%\i18n-manager
 git clone https://github.com/yourusername/i18n-manager.git
 ```
 
-2. 安装依赖：
+2. 创建cmd目录结构：
+
+```bash
+mkdir -p cmd/i18n-manager
+```
+
+3. 安装依赖：
 
 ```bash
 go mod download
 ```
 
-3. 运行测试：
+4. 运行测试：
 
 ```bash
 go test ./...
