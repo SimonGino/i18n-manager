@@ -369,9 +369,6 @@ func saveTranslations(key string, translations map[string]string) error {
 
 		// If key not found, append it to the end
 		if !keyFound {
-			if len(lines) > 0 && lines[len(lines)-1] != "" {
-				lines = append(lines, "") // Add empty line before new entry
-			}
 			// Encode value if it's Chinese
 			if strings.Contains(mapping.Code, "zh") {
 				value = encodeToUnicode(value)
@@ -393,9 +390,17 @@ func saveTranslations(key string, translations map[string]string) error {
 		writer := bufio.NewWriter(file)
 		for i, line := range lines {
 			if i > 0 || line != "" { // Skip initial empty line
-				if _, err := fmt.Fprintln(writer, line); err != nil {
-					file.Close()
-					return fmt.Errorf("error writing to %s: %v", filename, err)
+				if i < len(lines)-1 {
+					if _, err := fmt.Fprintln(writer, line); err != nil {
+						file.Close()
+						return fmt.Errorf("error writing to %s: %v", filename, err)
+					}
+				} else {
+					// 最后一行不添加换行符
+					if _, err := fmt.Fprint(writer, line); err != nil {
+						file.Close()
+						return fmt.Errorf("error writing to %s: %v", filename, err)
+					}
 				}
 			}
 		}
