@@ -119,7 +119,9 @@ i18n-manager translate "要翻译的文本"
 使用自定义键进行翻译：
 
 ```bash
-i18n-manager translate "要翻译的文本" --key "custom.key.name"
+i18n-manager translate --key custom.key.name "要翻译的文本"
+or
+i18n-manager translate -k custom.key.name "要翻译的文本"
 ```
 
 ### 2. 手动添加翻译

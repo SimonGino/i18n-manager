@@ -134,7 +134,9 @@ i18n-manager translate "Text to translate"
 Translate with custom key:
 
 ```bash
-i18n-manager translate "Text to translate" --key "custom.key.name"
+i18n-manager translate --key "custom.key.name" "Text to translate"
+or
+i18n-manager translate -k "custom.key.name" "Text to translate"
 ```
 
 ### 2. Manual Translation Addition
