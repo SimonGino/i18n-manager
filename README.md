@@ -17,7 +17,7 @@ A powerful multilingual properties file management tool designed for Java projec
 
 ## Features
 
-- 🤖 Smart Translation: Automated text translation using DeepSeek AI or Qwen (Tongyi) AI
+- 🤖 Smart Translation: Automated text translation using OpenAI-compatible APIs
 - 🔑 Smart Key Generation: Automatically generates keys compliant with Java properties standards
 - 🔄 Auto Sync: Automatic synchronization from Simplified Chinese (zh) to Traditional Chinese (zh_TW)
 - 📝 Manual Management: Support for manual addition and update of translations
@@ -53,17 +53,22 @@ Download the binary for your platform from the [Releases](https://github.com/Sim
 
 Before first use, configure your API key:
 
-1. Get your API key:
-   - For DeepSeek: Visit [DeepSeek Dashboard](https://platform.deepseek.com/api_keys)
-   - For Qwen: Visit [DashScope Console](https://dashscope.console.aliyun.com/apiKey)
+1. Get your API key from your preferred AI provider:
+   - OpenAI: Visit [OpenAI API Keys](https://platform.openai.com/api-keys)
+   - DeepSeek: Visit [DeepSeek Dashboard](https://platform.deepseek.com/api_keys)
+   - Qwen: Visit [DashScope Console](https://dashscope.console.aliyun.com/apiKey)
+   - Or any other OpenAI-compatible API provider
 
-2. Configure the API key and provider:
+2. Configure the API key, API URL and model:
 ```bash
-# Set AI provider (deepseek or qwen)
-i18n-manager config --set-ai-provider qwen
-
 # Set API key
 i18n-manager config --set-api-key YOUR_API_KEY
+
+# Set API URL (optional, default is OpenAI's endpoint)
+i18n-manager config --set-api-url "https://api.openai.com/v1/chat/completions"
+
+# Set model name (optional, default is gpt-3.5-turbo)
+i18n-manager config --set-model "gpt-3.5-turbo"
 ```
 
 The configuration file is located at `~/.config/i18n-manager/config.json` (or `%APPDATA%\i18n-manager\config.json` on Windows). Here's an example configuration:
@@ -71,8 +76,9 @@ The configuration file is located at `~/.config/i18n-manager/config.json` (or `%
 ```json
 {
   "api_key": "your-api-key",
+  "api_url": "https://api.openai.com/v1/chat/completions",
+  "model": "gpt-3.5-turbo",
   "default_path": ".",
-  "ai_provider": "deepseek",
   "language": {
     "file_pattern": "message-application%s.properties",
     "mappings": [
@@ -104,8 +110,9 @@ The configuration file is located at `~/.config/i18n-manager/config.json` (or `%
 ### Configuration Options
 
 - `api_key`: Your AI provider API key
+- `api_url`: API endpoint URL for the AI service
+- `model`: Model name to use for translation
 - `default_path`: Default path for properties files
-- `ai_provider`: AI provider for translation (currently supports "deepseek" or "qwen")
 - `language`: Language configuration
   - `file_pattern`: Pattern for properties files (e.g., "message-application%s.properties")
   - `mappings`: Language mappings
@@ -117,9 +124,30 @@ You can modify these settings using the following commands:
 
 ```bash
 i18n-manager config --set-api-key "your-api-key"
-i18n-manager config --set-ai-provider "deepseek"
+i18n-manager config --set-api-url "https://api.openai.com/v1/chat/completions"
+i18n-manager config --set-model "gpt-3.5-turbo"
 i18n-manager config --show  # Show current configuration
 ```
+
+### Supported Models and API Endpoints
+
+You can use any OpenAI-compatible API endpoint and model. Here are some examples:
+
+- OpenAI
+  - URL: `https://api.openai.com/v1/chat/completions`
+  - Models: `gpt-3.5-turbo`, `gpt-4`, etc.
+
+- DeepSeek
+  - URL: `https://api.deepseek.com/v1/chat/completions`
+  - Models: `deepseek-chat`, etc.
+
+- Qwen (Tongyi)
+  - URL: `https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`
+  - Models: `qwen-plus`, etc.
+
+- Self-hosted models (like LM Studio, Ollama, etc.)
+  - URL: `http://localhost:1234/v1/chat/completions` (adjust port as needed)
+  - Models: depends on your setup
 
 ## Usage
 
@@ -206,6 +234,8 @@ Configuration files are located at:
 Contains the following settings:
 
 - `api_key`: API key
+- `api_url`: API endpoint URL for the AI service
+- `model`: Model name to use for translation
 - `default_path`: Default working directory
 - `default_source_lang`: Default source language
 - `default_target_langs`: Default target language list

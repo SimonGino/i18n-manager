@@ -1,14 +1,14 @@
 package ai
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/SimonGino/i18n-manager/internal/config"
+	"github.com/sashabaranov/go-openai"
 )
 
 type TranslationRequest struct {
@@ -17,180 +17,65 @@ type TranslationRequest struct {
 	TargetLang string
 }
 
-type DeepSeekRequest struct {
-	Model    string        `json:"model"`
-	Messages []DeepSeekMsg `json:"messages"`
-}
-
-type DeepSeekMsg struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type QwenRequest struct {
-	Model    string    `json:"model"`
-	Messages []QwenMsg `json:"messages"`
-}
-
-type QwenMsg struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type Parameters struct {
-	ResultFormat string `json:"result_format"`
-}
-
-type DeepSeekResponse struct {
-	Choices []struct {
-		Message struct {
-			Content string `json:"content"`
-		} `json:"message"`
-	} `json:"choices"`
-}
-
-type QwenResponse struct {
-	Choices []struct {
-		Message struct {
-			Content string `json:"content"`
-		} `json:"message"`
-	} `json:"choices"`
-}
-
 func Translate(req TranslationRequest) (string, error) {
 	cfg := config.GetConfig()
 
-	// Check if API key is set
+	// 检查API密钥是否设置
 	if cfg.APIKey == "" {
-		return "", fmt.Errorf("API key not set. Please run:\ni18n-manager config --set-api-key YOUR_API_KEY")
+		return "", fmt.Errorf("API密钥未设置。请运行:\ni18n-manager config --set-api-key YOUR_API_KEY")
 	}
 
-	// Check if AI provider is set
-	if cfg.AIProvider == "" {
-		return "", fmt.Errorf("AI provider not set. Please run:\ni18n-manager config --set-ai-provider [deepseek|qwen]")
+	// 检查API URL是否设置
+	if cfg.APIURL == "" {
+		return "", fmt.Errorf("API URL未设置。请运行:\ni18n-manager config --set-api-url YOUR_API_URL")
 	}
 
-	switch cfg.AIProvider {
-	case "deepseek":
-		return translateWithDeepSeek(req, cfg.APIKey)
-	case "qwen":
-		return translateWithQwen(req, cfg.APIKey)
-	default:
-		return "", fmt.Errorf("unsupported AI provider: %s, please use 'deepseek' or 'qwen'", cfg.AIProvider)
+	// 检查模型是否设置
+	if cfg.Model == "" {
+		return "", fmt.Errorf("AI模型未设置。请运行:\ni18n-manager config --set-model MODEL_NAME")
 	}
-}
 
-func translateWithDeepSeek(req TranslationRequest, apiKey string) (string, error) {
-	prompt := fmt.Sprintf("Translate the following text from %s to %s. Only return the translated text without any explanation or additional context:\n%s",
+	// 创建自定义配置
+	clientConfig := openai.DefaultConfig(cfg.APIKey)
+	clientConfig.BaseURL = cfg.APIURL
+	clientConfig.HTTPClient = &http.Client{Timeout: 30 * time.Second}
+
+	// 创建OpenAI客户端
+	client := openai.NewClientWithConfig(clientConfig)
+
+	// 构建提示信息
+	prompt := fmt.Sprintf("将以下文本从%s翻译为%s。只返回翻译后的文本，不要包含任何解释或额外内容：\n%s",
 		req.SourceLang, req.TargetLang, req.Text)
 
-	deepSeekReq := DeepSeekRequest{
-		Model: "deepseek-chat",
-		Messages: []DeepSeekMsg{
+	// 创建请求
+	request := openai.ChatCompletionRequest{
+		Model: cfg.Model,
+		Messages: []openai.ChatCompletionMessage{
 			{
-				Role:    "user",
+				Role:    openai.ChatMessageRoleSystem,
+				Content: "你是一位专业翻译。只返回翻译后的文本，不要包含任何解释。",
+			},
+			{
+				Role:    openai.ChatMessageRoleUser,
 				Content: prompt,
 			},
 		},
+		Temperature: 0.3, // 较低的温度使输出更确定
 	}
 
-	jsonData, err := json.Marshal(deepSeekReq)
+	// 发送请求
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	resp, err := client.CreateChatCompletion(ctx, request)
 	if err != nil {
-		return "", fmt.Errorf("error marshaling request: %v", err)
+		return "", fmt.Errorf("API请求失败: %v\n请检查您的API密钥、配额和网络连接。", err)
 	}
 
-	httpReq, err := http.NewRequest("POST", "https://api.deepseek.com/v1/chat/completions", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return "", fmt.Errorf("error creating request: %v", err)
+	if len(resp.Choices) == 0 || resp.Choices[0].Message.Content == "" {
+		return "", fmt.Errorf("响应中没有翻译结果")
 	}
 
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return "", fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading response: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var result DeepSeekResponse
-	if err := json.Unmarshal(body, &result); err != nil {
-		return "", fmt.Errorf("error parsing response: %v", err)
-	}
-
-	if len(result.Choices) == 0 {
-		return "", fmt.Errorf("no translation result in response")
-	}
-
-	return strings.TrimSpace(result.Choices[0].Message.Content), nil
-}
-
-func translateWithQwen(req TranslationRequest, apiKey string) (string, error) {
-	prompt := fmt.Sprintf("Translate the following text from %s to %s. Only return the translated text without any explanation:\n%s",
-		req.SourceLang, req.TargetLang, req.Text)
-
-	qwenReq := QwenRequest{
-		Model: "qwen-plus",
-		Messages: []QwenMsg{
-			{
-				Role:    "system",
-				Content: "You are a professional translator. Only return the translated text without any explanation.",
-			},
-			{
-				Role:    "user",
-				Content: prompt,
-			},
-		},
-	}
-
-	jsonData, err := json.Marshal(qwenReq)
-	if err != nil {
-		return "", fmt.Errorf("error marshaling request: %v", err)
-	}
-
-	httpReq, err := http.NewRequest("POST", "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return "", fmt.Errorf("error creating request: %v", err)
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return "", fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading response: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API request failed (status %d): %s\nPlease check your API key and quota.\nResponse Headers: %v",
-			resp.StatusCode, string(body), resp.Header)
-	}
-
-	var result QwenResponse
-	if err := json.Unmarshal(body, &result); err != nil {
-		return "", fmt.Errorf("error parsing response: %v\nResponse body: %s", err, string(body))
-	}
-
-	if len(result.Choices) == 0 || result.Choices[0].Message.Content == "" {
-		return "", fmt.Errorf("no translation result in response")
-	}
-
-	return strings.TrimSpace(result.Choices[0].Message.Content), nil
+	// 返回翻译结果
+	return strings.TrimSpace(resp.Choices[0].Message.Content), nil
 }

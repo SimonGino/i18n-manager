@@ -23,8 +23,9 @@ type LangMapping struct {
 
 type Config struct {
 	APIKey      string         `json:"api_key"`
+	APIURL      string         `json:"api_url"`
+	Model       string         `json:"model"`
 	DefaultPath string         `json:"default_path"`
-	AIProvider  string         `json:"ai_provider"`
 	Language    LanguageConfig `json:"language"`
 }
 
@@ -70,6 +71,8 @@ func loadConfig() {
 		// 默认配置
 		currentConfig = &Config{
 			DefaultPath: ".",
+			APIURL:      "https://api.openai.com/v1/chat/completions", // 默认使用OpenAI API完整路径
+			Model:       "gpt-3.5-turbo",                              // 默认模型
 			Language: LanguageConfig{
 				FilePattern: "message-application%s.properties",
 				Default:     "", // 英文文件没有后缀
@@ -122,15 +125,21 @@ func HandleConfig(c *cli.Context) error {
 		return nil
 	}
 
-	if provider := c.String("set-ai-provider"); provider != "" {
-		if provider != "deepseek" && provider != "qwen" {
-			return fmt.Errorf("invalid AI provider, must be either 'deepseek' or 'qwen'")
-		}
-		currentConfig.AIProvider = provider
+	if apiURL := c.String("set-api-url"); apiURL != "" {
+		currentConfig.APIURL = apiURL
 		if err := saveConfig(); err != nil {
-			return fmt.Errorf("failed to save AI provider: %v", err)
+			return fmt.Errorf("failed to save API URL: %v", err)
 		}
-		fmt.Println("AI provider updated successfully")
+		fmt.Println("API URL updated successfully")
+		return nil
+	}
+
+	if model := c.String("set-model"); model != "" {
+		currentConfig.Model = model
+		if err := saveConfig(); err != nil {
+			return fmt.Errorf("failed to save model: %v", err)
+		}
+		fmt.Println("Model updated successfully")
 		return nil
 	}
 

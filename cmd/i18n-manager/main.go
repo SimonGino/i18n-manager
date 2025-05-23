@@ -81,8 +81,12 @@ func main() {
 						Usage: "Set API key",
 					},
 					&cli.StringFlag{
-						Name:  "set-ai-provider",
-						Usage: "Set AI provider (deepseek or qwen)",
+						Name:  "set-api-url",
+						Usage: "Set API URL (e.g., https://api.openai.com/v1/chat/completions)",
+					},
+					&cli.StringFlag{
+						Name:  "set-model",
+						Usage: "Set model name (e.g., gpt-3.5-turbo, gpt-4, deepseek-chat, qwen-plus)",
 					},
 					&cli.BoolFlag{
 						Name:  "show",

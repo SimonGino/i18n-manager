@@ -17,7 +17,7 @@
 
 ## 特性
 
-- 🤖 智能翻译：使用DeepSeek AI或通义千问AI进行自动文本翻译
+- 🤖 智能翻译：使用兼容OpenAI的API进行自动文本翻译
 - 🔑 智能键生成：自动生成符合Java属性标准的键
 - 🔄 自动同步：自动从简体中文(zh)同步到繁体中文(zh_TW)
 - 📝 手动管理：支持手动添加和更新翻译
@@ -51,13 +51,34 @@ curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/install
 
 ## 配置
 
+首次使用前，请配置您的API密钥：
+
+1. 从您选择的AI提供商获取API密钥：
+   - OpenAI：访问 [OpenAI API Keys](https://platform.openai.com/api-keys)
+   - DeepSeek：访问 [DeepSeek Dashboard](https://platform.deepseek.com/api_keys)
+   - 通义千问：访问 [DashScope Console](https://dashscope.console.aliyun.com/apiKey)
+   - 或任何其他兼容OpenAI的API提供商
+
+2. 配置API密钥、API URL和模型：
+```bash
+# 设置API密钥
+i18n-manager config --set-api-key YOUR_API_KEY
+
+# 设置API URL（可选，默认为OpenAI的端点）
+i18n-manager config --set-api-url "https://api.openai.com/v1/chat/completions"
+
+# 设置模型名称（可选，默认为gpt-3.5-turbo）
+i18n-manager config --set-model "gpt-3.5-turbo"
+```
+
 配置文件位于 `~/.config/i18n-manager/config.json`（Windows 系统位于 `%APPDATA%\i18n-manager\config.json`）。以下是一个配置示例：
 
 ```json
 {
   "api_key": "your-api-key",
+  "api_url": "https://api.openai.com/v1/chat/completions",
+  "model": "gpt-3.5-turbo",
   "default_path": ".",
-  "ai_provider": "deepseek",
   "language": {
     "file_pattern": "message-application%s.properties",
     "mappings": [
@@ -88,9 +109,10 @@ curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/install
 
 ### 配置选项
 
-- `api_key`: 你的 AI 提供商 API 密钥
+- `api_key`: 您的 AI 提供商 API 密钥
+- `api_url`: AI 服务的 API 端点 URL
+- `model`: 用于翻译的模型名称
 - `default_path`: 属性文件的默认路径
-- `ai_provider`: 翻译使用的 AI 提供商（目前支持 "deepseek" 或 "qwen"）
 - `language`: 语言配置
   - `file_pattern`: 属性文件的命名模式（如 "message-application%s.properties"）
   - `mappings`: 语言映射
@@ -102,9 +124,30 @@ curl -fsSL https://raw.githubusercontent.com/SimonGino/i18n-manager/main/install
 
 ```bash
 i18n-manager config --set-api-key "your-api-key"
-i18n-manager config --set-ai-provider "deepseek"
+i18n-manager config --set-api-url "https://api.openai.com/v1/chat/completions"
+i18n-manager config --set-model "gpt-3.5-turbo"
 i18n-manager config --show  # 显示当前配置
 ```
+
+### 支持的模型和API端点
+
+您可以使用任何兼容OpenAI的API端点和模型。以下是一些示例：
+
+- OpenAI
+  - URL: `https://api.openai.com/v1/chat/completions`
+  - 模型: `gpt-3.5-turbo`, `gpt-4` 等
+
+- DeepSeek
+  - URL: `https://api.deepseek.com/v1/chat/completions`
+  - 模型: `deepseek-chat` 等
+
+- 通义千问 (Qwen)
+  - URL: `https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`
+  - 模型: `qwen-plus` 等
+
+- 自托管模型 (如 LM Studio, Ollama 等)
+  - URL: `http://localhost:1234/v1/chat/completions` (根据需要调整端口)
+  - 模型: 取决于您的设置
 
 ## 使用方法
 
