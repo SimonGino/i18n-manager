@@ -58,6 +58,7 @@ func HandleTranslate(c *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to generate key: %v", err)
 		}
+		translations["en"] = englishText
 		key = generateKey(englishText)
 	}
 
