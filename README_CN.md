@@ -314,6 +314,12 @@ go mod download
 go test ./...
 ```
 
+5. 构建项目：
+
+```bash
+go build -o i18n-manager cmd/i18n-manager/main.go
+```
+
 ## 贡献
 
 欢迎提交Pull Request和问题报告！

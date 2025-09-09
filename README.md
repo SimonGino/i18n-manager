@@ -330,6 +330,12 @@ go mod download
 go test ./...
 ```
 
+5. Build the project:
+
+```bash
+go build -o i18n-manager cmd/i18n-manager/main.go
+```
+
 ## Contributing
 
 Pull requests and issue reports are welcome!
