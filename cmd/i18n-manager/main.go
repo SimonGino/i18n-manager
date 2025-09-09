@@ -11,8 +11,16 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:  "i18n-manager",
-		Usage: "A powerful multilingual properties file management tool for Java project internationalization",
+		Name:   "i18n-manager",
+		Usage:  "A powerful multilingual properties file management tool for Java project internationalization",
+		Action: manager.HandleTranslate, // Default action for translate
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "key",
+				Aliases: []string{"k"},
+				Usage:   "Custom key for translation",
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:    "translate",

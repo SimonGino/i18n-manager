@@ -153,18 +153,27 @@ You can use any OpenAI-compatible API endpoint and model. Here are some examples
 
 ### 1. Smart Translation
 
-Translate with auto-generated key:
+Translate with auto-generated key (default command):
 
 ```bash
-i18n-manager translate "Text to translate"
+# Direct translation without the 'translate' command
+i18n-manager "Text to translate"
 ```
 
 Translate with custom key:
 
 ```bash
+# Direct translation with custom key
+i18n-manager --key "custom.key.name" "Text to translate"
+i18n-manager -k "custom.key.name" "Text to translate"
+```
+
+Alternative syntax (still supported):
+
+```bash
+# Original command syntax
+i18n-manager translate "Text to translate"
 i18n-manager translate --key "custom.key.name" "Text to translate"
-or
-i18n-manager translate -k "custom.key.name" "Text to translate"
 ```
 
 ### 2. Manual Translation Addition

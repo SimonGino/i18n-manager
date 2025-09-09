@@ -153,18 +153,27 @@ i18n-manager config --show  # 显示当前配置
 
 ### 1. 智能翻译
 
-使用自动生成的键进行翻译：
+使用自动生成的键进行翻译（默认命令）：
 
 ```bash
-i18n-manager translate "要翻译的文本"
+# 直接翻译，无需 'translate' 命令
+i18n-manager "要翻译的文本"
 ```
 
 使用自定义键进行翻译：
 
 ```bash
+# 直接翻译并指定自定义键
+i18n-manager --key custom.key.name "要翻译的文本"
+i18n-manager -k custom.key.name "要翻译的文本"
+```
+
+替代语法（仍然支持）：
+
+```bash
+# 原始命令语法
+i18n-manager translate "要翻译的文本"
 i18n-manager translate --key custom.key.name "要翻译的文本"
-or
-i18n-manager translate -k custom.key.name "要翻译的文本"
 ```
 
 ### 2. 手动添加翻译
