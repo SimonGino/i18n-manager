@@ -22,11 +22,13 @@ type LangMapping struct {
 }
 
 type Config struct {
-	APIKey      string         `json:"api_key"`
-	APIURL      string         `json:"api_url"`
-	Model       string         `json:"model"`
-	DefaultPath string         `json:"default_path"`
-	Language    LanguageConfig `json:"language"`
+	APIKey         string         `json:"api_key"`
+	APIURL         string         `json:"api_url"`
+	Model          string         `json:"model"`
+	DefaultPath    string         `json:"default_path"`
+	Language       LanguageConfig `json:"language"`
+	// Azure OpenAI specific fields
+	AzureAPIVersion string `json:"azure_api_version,omitempty"`
 }
 
 var currentConfig *Config
@@ -140,6 +142,15 @@ func HandleConfig(c *cli.Context) error {
 			return fmt.Errorf("failed to save model: %v", err)
 		}
 		fmt.Println("Model updated successfully")
+		return nil
+	}
+
+	if azureAPIVersion := c.String("set-azure-api-version"); azureAPIVersion != "" {
+		currentConfig.AzureAPIVersion = azureAPIVersion
+		if err := saveConfig(); err != nil {
+			return fmt.Errorf("failed to save Azure API version: %v", err)
+		}
+		fmt.Println("Azure API version updated successfully")
 		return nil
 	}
 

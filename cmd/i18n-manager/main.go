@@ -96,6 +96,10 @@ func main() {
 						Name:  "set-model",
 						Usage: "Set model name (e.g., gpt-3.5-turbo, gpt-4, deepseek-chat, qwen-plus)",
 					},
+					&cli.StringFlag{
+						Name:  "set-azure-api-version",
+						Usage: "Set Azure OpenAI API version (e.g., 2024-02-15-preview)",
+					},
 					&cli.BoolFlag{
 						Name:  "show",
 						Usage: "Show current configuration",

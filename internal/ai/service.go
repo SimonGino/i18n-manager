@@ -40,6 +40,12 @@ func Translate(req TranslationRequest) (string, error) {
 	clientConfig.BaseURL = cfg.APIURL
 	clientConfig.HTTPClient = &http.Client{Timeout: 30 * time.Second}
 
+	// 如果是Azure OpenAI，设置API版本
+	if cfg.AzureAPIVersion != "" {
+		clientConfig.APIVersion = cfg.AzureAPIVersion
+		clientConfig.APIType = openai.APITypeAzure
+	}
+
 	// 创建OpenAI客户端
 	client := openai.NewClientWithConfig(clientConfig)
 

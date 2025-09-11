@@ -129,6 +129,57 @@ i18n-manager config --set-model "gpt-3.5-turbo"
 i18n-manager config --show  # 显示当前配置
 ```
 
+### Azure OpenAI 配置
+
+对于 Azure OpenAI 服务，您需要配置额外的参数：
+
+```bash
+# 设置您的 Azure OpenAI API 密钥
+i18n-manager config --set-api-key "your-azure-api-key"
+
+# 设置您的 Azure OpenAI 端点
+# 格式：https://your-resource-name.openai.azure.com/openai/deployments/your-deployment-name/chat/completions
+i18n-manager config --set-api-url "https://your-resource-name.openai.azure.com/openai/deployments/your-deployment-name/chat/completions"
+
+# 设置您的部署模型名称
+i18n-manager config --set-model "gpt-35-turbo"
+
+# 设置 Azure API 版本（Azure OpenAI 必需）
+i18n-manager config --set-azure-api-version "2024-02-15-preview"
+```
+
+Azure OpenAI 配置文件示例：
+
+```json
+{
+  "api_key": "your-azure-api-key",
+  "api_url": "https://your-resource-name.openai.azure.com/openai/deployments/your-deployment-name/chat/completions",
+  "model": "gpt-35-turbo",
+  "azure_api_version": "2024-02-15-preview",
+  "default_path": ".",
+  "language": {
+    "file_pattern": "message-application%s.properties",
+    "mappings": [
+      {
+        "code": "en",
+        "file": "",
+        "is_source": false
+      },
+      {
+        "code": "zh",
+        "file": "_zh",
+        "is_source": true
+      },
+      {
+        "code": "zh_TW",
+        "file": "_zh_TW",
+        "is_source": false
+      }
+    ]
+  }
+}
+```
+
 ### 支持的模型和API端点
 
 您可以使用任何兼容OpenAI的API端点和模型。以下是一些示例：
@@ -136,6 +187,11 @@ i18n-manager config --show  # 显示当前配置
 - OpenAI
   - URL: `https://api.openai.com/v1/chat/completions`
   - 模型: `gpt-3.5-turbo`, `gpt-4` 等
+
+- Azure OpenAI
+  - URL: `https://your-resource-name.openai.azure.com/openai/deployments/your-deployment-name/chat/completions`
+  - 模型: 取决于您的部署（如 `gpt-35-turbo`, `gpt-4`）
+  - API版本: `2024-02-15-preview`（或其他支持的版本）
 
 - DeepSeek
   - URL: `https://api.deepseek.com/v1/chat/completions`

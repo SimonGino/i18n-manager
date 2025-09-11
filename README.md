@@ -129,6 +129,57 @@ i18n-manager config --set-model "gpt-3.5-turbo"
 i18n-manager config --show  # Show current configuration
 ```
 
+### Azure OpenAI Configuration
+
+For Azure OpenAI services, you need to configure additional parameters:
+
+```bash
+# Set your Azure OpenAI API key
+i18n-manager config --set-api-key "your-azure-api-key"
+
+# Set your Azure OpenAI endpoint
+# Format: https://your-resource-name.openai.azure.com/openai/deployments/your-deployment-name/chat/completions
+i18n-manager config --set-api-url "https://your-resource-name.openai.azure.com/openai/deployments/your-deployment-name/chat/completions"
+
+# Set your deployment model name
+i18n-manager config --set-model "gpt-35-turbo"
+
+# Set Azure API version (required for Azure OpenAI)
+i18n-manager config --set-azure-api-version "2024-02-15-preview"
+```
+
+Example Azure OpenAI configuration file:
+
+```json
+{
+  "api_key": "your-azure-api-key",
+  "api_url": "https://your-resource-name.openai.azure.com/openai/deployments/your-deployment-name/chat/completions",
+  "model": "gpt-35-turbo",
+  "azure_api_version": "2024-02-15-preview",
+  "default_path": ".",
+  "language": {
+    "file_pattern": "message-application%s.properties",
+    "mappings": [
+      {
+        "code": "en",
+        "file": "",
+        "is_source": false
+      },
+      {
+        "code": "zh",
+        "file": "_zh",
+        "is_source": true
+      },
+      {
+        "code": "zh_TW",
+        "file": "_zh_TW",
+        "is_source": false
+      }
+    ]
+  }
+}
+```
+
 ### Supported Models and API Endpoints
 
 You can use any OpenAI-compatible API endpoint and model. Here are some examples:
@@ -136,6 +187,11 @@ You can use any OpenAI-compatible API endpoint and model. Here are some examples
 - OpenAI
   - URL: `https://api.openai.com/v1/chat/completions`
   - Models: `gpt-3.5-turbo`, `gpt-4`, etc.
+
+- Azure OpenAI
+  - URL: `https://your-resource-name.openai.azure.com/openai/deployments/your-deployment-name/chat/completions`
+  - Models: depends on your deployment (e.g., `gpt-35-turbo`, `gpt-4`)
+  - API Version: `2024-02-15-preview` (or other supported versions)
 
 - DeepSeek
   - URL: `https://api.deepseek.com/v1/chat/completions`
